@@ -1,0 +1,38 @@
+.learning-container {
+    
+    text-align: center;
+    background-color: rgb(194, 194, 194);
+    height: auto;
+    
+}
+.learning-category{
+   display: flex;
+   flex-wrap: wrap;
+   margin: 32px 72px;
+   justify-content: space-between;
+
+}
+.learning-title{
+    margin-top: 32px ;
+    margin-bottom: 32px ;
+}
+.cat1{
+    background-color: aliceblue;
+   margin: 32px;
+ 
+    
+}
+.cat1 h1{
+    margin-top: 16px;
+}
+.cat1 h2{
+    margin: 8px 0px;
+}
+.cat1 img{
+    height:auto;
+    width:auto;
+}
+.card-container{
+    margin: 16px 0px;
+    text-align: left;
+}
