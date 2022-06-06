@@ -1,3 +1,6 @@
+*{
+    box-sizing: border-box;
+}
 .learning-container {
     
     text-align: center;
@@ -8,18 +11,21 @@
 .learning-category{
    display: flex;
    flex-wrap: wrap;
-   margin: 32px 72px;
-   justify-content: space-between;
+   padding: 0px 72px;
+ justify-content:center;
+   width:auto;
 
 }
 .learning-title{
-    margin-top: 32px ;
-    margin-bottom: 32px ;
+    padding: 32px;
+    margin: 0;
 }
 .cat1{
     background-color: aliceblue;
-   margin: 32px;
+   margin: 12px 16px;
+   height: auto;
  
+   width: 25%;
     
 }
 .cat1 h1{
@@ -30,9 +36,12 @@
 }
 .cat1 img{
     height:auto;
-    width:auto;
+    width: 100%;
 }
 .card-container{
-    margin: 16px 0px;
+    margin-top: 16px ;
+    margin-left: 16px;
+    margin-right: 16px;
+    margin-bottom: 24px;
     text-align: left;
 }
