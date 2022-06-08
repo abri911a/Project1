@@ -19,6 +19,8 @@
 .learning-title{
     padding: 32px;
     margin: 0;
+    text-align: center;
+    width:100%;
 }
 .cat1{
     background-color: aliceblue;
@@ -104,3 +106,46 @@ margin-bottom: 8px;
     margin-bottom: 32px;
     
     }
+@media  screen and (min-width:640px)
+{
+    .mob-header{
+        display:none ;
+    }
+}
+@media  screen and (max-width:640px)
+{
+    .mob-header{
+        display:flex ;
+        width:100%;
+        justify-content: space-around;
+    }
+    .header-items{
+       cursor: pointer;
+    }
+    .header-container{
+        display: none;
+    }
+    .learning-container,.learning-category{
+        display: block;
+    }
+    .cat1{
+        width: 100%;
+    }
+    .cat1 img,.cat1 h2,.cat1 p{
+        display: none;
+    }
+    .learning-container{
+        padding:0;
+    }
+    .ex-right{
+        display: none;
+        text-align: center;
+    }
+    .ex-left{
+        width:100%;
+    }
+    .ex-left vid{
+        padding: 0;
+        margin: 0;
+    }
+}
