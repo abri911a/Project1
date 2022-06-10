@@ -1,6 +1,7 @@
 *{
     box-sizing: border-box;
 }
+<<<<<<< HEAD
 body{
     font-family:Helvetica, sans-serif;
     width: 100%;
@@ -119,3 +120,153 @@ display: flex;
     width: 65%;
 }
 
+=======
+.learning-container {
+    
+    text-align: center;
+    background-color: rgb(194, 194, 194);
+    height: auto;
+    
+}
+.learning-category{
+   display: flex;
+   flex-wrap: wrap;
+   padding: 0px 72px;
+ justify-content:center;
+   width:auto;
+
+}
+.learning-title{
+    padding: 32px;
+    margin: 0;
+    text-align: center;
+    width:100%;
+}
+.cat1{
+    background-color: aliceblue;
+   margin: 12px 16px;
+   height: auto;
+ 
+   width: 25%;
+    
+}
+.cat1 h1{
+    margin-top: 16px;
+}
+.cat1 h2{
+    margin: 8px 0px;
+}
+.cat1 img{
+    height:auto;
+    width: 100%;
+}
+.card-container{
+    margin-top: 16px ;
+    margin-left: 16px;
+    margin-right: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+    padding: 24px;
+}
+.ex-container2{
+    width: 100%;
+    background-color: whitesmoke;
+    display: flex;
+   
+}
+.ex-left{
+width: 60%;
+margin:0 24px;
+
+}
+.video{
+    
+width: 100%;
+
+padding: 0;
+margin: 0;
+
+    }
+    .video video{
+        width:100%
+    }
+.ex-right{
+    width: 40%;
+    
+}
+.ex-title{
+    padding: 32px;
+    text-align: center;
+    margin: 0;
+}
+.ex-right{
+    display: flex;
+    flex-direction: column;
+   
+}
+.right-top{
+    background-color: rgb(227, 223, 223);
+}
+.right-top,.right-bottom{
+    display: flex;
+}
+.right-top img,.right-bottom img{
+    width:35%;
+    height: 85%;
+    padding: 16px;
+}
+.img-text{
+    width:65%;
+}
+.video-text h1{
+margin-bottom: 8px;
+
+}
+.video-text {
+    margin-bottom: 32px;
+    
+    }
+@media  screen and (min-width:640px)
+{
+    .mob-header{
+        display:none ;
+    }
+}
+@media  screen and (max-width:640px)
+{
+    .mob-header{
+        display:flex ;
+        width:100%;
+        justify-content: space-around;
+    }
+    .header-items{
+       cursor: pointer;
+    }
+    .header-container{
+        display: none;
+    }
+    .learning-container,.learning-category{
+        display: block;
+    }
+    .cat1{
+        width: 100%;
+    }
+    .cat1 img,.cat1 h2,.cat1 p{
+        display: none;
+    }
+    .learning-container{
+        padding:0;
+    }
+    .ex-right{
+        display: none;
+        text-align: center;
+    }
+    .ex-left{
+        width:100%;
+    }
+    .ex-left vid{
+        padding: 0;
+        margin: 0;
+    }
+}
+>>>>>>> 0199840fdcf0d99f96f9476a4c991d1589c35940
