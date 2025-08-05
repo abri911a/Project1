@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Metrics Widget</title>
+    <title>Live Metrics Widget - Debug Version</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -66,14 +66,8 @@
             transition: all 0.2s;
         }
 
-        .refresh-btn:hover {
-            background: #5a67d8;
-        }
-
-        .refresh-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        .refresh-btn:hover { background: #5a67d8; }
+        .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .metrics {
             display: grid;
@@ -110,15 +104,8 @@
             font-weight: 500;
         }
 
-        .loading {
-            color: #a0aec0;
-            font-size: 1rem;
-        }
-
-        .error {
-            color: #e53e3e;
-            font-size: 0.9rem;
-        }
+        .loading { color: #a0aec0; font-size: 1rem; }
+        .error { color: #e53e3e; font-size: 0.9rem; }
 
         .update-time {
             text-align: center;
@@ -136,52 +123,35 @@
             margin-left: 8px;
         }
 
-        .status-success {
-            background: #c6f6d5;
-            color: #276749;
-        }
+        .status-success { background: #c6f6d5; color: #276749; }
+        .status-error { background: #fed7d7; color: #c53030; }
+        .status-loading { background: #bee3f8; color: #2a69ac; }
 
-        .status-error {
-            background: #fed7d7;
-            color: #c53030;
-        }
-
-        .status-loading {
-            background: #bee3f8;
-            color: #2a69ac;
-        }
-
-        .setup-notice {
-            background: #fef5e7;
-            border: 1px solid #f6ad55;
+        .debug-info {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: #744210;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 0.7rem;
+            color: #4a5568;
+            max-height: 150px;
+            overflow-y: auto;
         }
 
-        .setup-notice h3 {
-            margin: 0 0 10px 0;
-            color: #744210;
-        }
-
-        .setup-notice code {
-            background: #fed7af;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: monospace;
+        .debug-toggle {
+            background: #e2e8f0;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="widget">
-        <!-- Setup notice -->
-        <div class="setup-notice" id="setupNotice">
-            <h3>⚠️ Setup Required</h3>
-            <p>Please replace <code>PASTE_YOUR_TOKEN_HERE</code> with your Notion integration token.</p>
-            <p>This version uses a serverless proxy to avoid CORS issues.</p>
-        </div>
-
         <div class="header">
             <h2>
                 <div class="live-dot"></div>
@@ -237,32 +207,51 @@
 
         <div class="update-time">
             Last updated: <span id="lastUpdate">Never</span>
+            <button class="debug-toggle" onclick="toggleDebug()">Show Debug Info</button>
+        </div>
+
+        <div class="debug-info" id="debugInfo" style="display: none;">
+            <div id="debugContent">No debug data yet...</div>
         </div>
     </div>
 
     <script>
-        // 🔥 STEP 1: Replace this with your actual Notion integration token
+        // 🔥 Replace with your actual Notion integration token
         const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP';
-        
-        // 🔥 STEP 2: This will be your Netlify function URL (update after deployment)
         const PROXY_URL = '/.netlify/functions/notion-proxy';
-        
-        // Database ID (already correct)
         const TASKS_DB_ID = 'e1cdae69-6ef0-442f-9777-01c2d7473b66';
 
         let isLoading = false;
+        let debugData = [];
 
-        // Hide setup notice if token is configured
-        if (NOTION_TOKEN !== 'PASTE_YOUR_TOKEN_HERE') {
-            document.getElementById('setupNotice').style.display = 'none';
+        function addDebugInfo(message) {
+            debugData.push(`${new Date().toLocaleTimeString()}: ${message}`);
+            if (debugData.length > 20) debugData.shift(); // Keep only last 20 entries
+            
+            const debugContent = document.getElementById('debugContent');
+            debugContent.innerHTML = debugData.join('<br>');
+        }
+
+        function toggleDebug() {
+            const debugInfo = document.getElementById('debugInfo');
+            const toggleBtn = document.querySelector('.debug-toggle');
+            
+            if (debugInfo.style.display === 'none') {
+                debugInfo.style.display = 'block';
+                toggleBtn.textContent = 'Hide Debug Info';
+            } else {
+                debugInfo.style.display = 'none';
+                toggleBtn.textContent = 'Show Debug Info';
+            }
         }
 
         async function fetchNotionTasks() {
-            if (!NOTION_TOKEN || NOTION_TOKEN === 'PASTE_YOUR_TOKEN_HERE') {
+            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
                 throw new Error('Please configure your Notion integration token');
             }
 
-            // Use the proxy instead of direct API call
+            addDebugInfo('Making API request to Notion...');
+
             const response = await fetch(PROXY_URL, {
                 method: 'POST',
                 headers: {
@@ -276,10 +265,13 @@
 
             if (!response.ok) {
                 const errorData = await response.json();
+                addDebugInfo(`API Error: ${response.status} - ${errorData.error}`);
                 throw new Error(`Proxy Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
             }
 
             const data = await response.json();
+            addDebugInfo(`Received ${data.results.length} tasks from Notion`);
+            
             return data.results;
         }
 
@@ -288,16 +280,25 @@
             isLoading = true;
 
             try {
-                // Show loading state
                 updateApiStatus('loading');
+                addDebugInfo('Starting metrics update...');
                 
                 const tasks = await fetchNotionTasks();
                 
-                // Calculate metrics from your Notion data
+                // Debug: Log all unique status and priority values
+                const statuses = [...new Set(tasks.map(t => t.properties.Status?.select?.name).filter(Boolean))];
+                const priorities = [...new Set(tasks.map(t => t.properties.Priority?.select?.name).filter(Boolean))];
+                
+                addDebugInfo(`Found statuses: ${statuses.join(', ')}`);
+                addDebugInfo(`Found priorities: ${priorities.join(', ')}`);
+                
+                // Calculate metrics with exact string matching
                 const totalTasks = tasks.length;
                 const highPriority = tasks.filter(t => t.properties.Priority?.select?.name === '🔥 High').length;
                 const completed = tasks.filter(t => t.properties.Status?.select?.name === '✅ Completed').length;
                 const inProgress = tasks.filter(t => t.properties.Status?.select?.name === '🚀 In Progress').length;
+                
+                addDebugInfo(`Metrics: Total=${totalTasks}, High Priority=${highPriority}, Completed=${completed}, In Progress=${inProgress}`);
                 
                 // Calculate this week's tasks
                 const now = new Date();
@@ -309,16 +310,19 @@
                 endOfWeek.setDate(startOfWeek.getDate() + 6);
                 endOfWeek.setHours(23, 59, 59, 999);
                 
-                const thisWeek = tasks.filter(task => {
+                const thisWeekTasks = tasks.filter(task => {
                     const dueDate = task.properties['Due Date']?.date?.start;
                     if (!dueDate) return false;
                     const taskDate = new Date(dueDate);
                     return taskDate >= startOfWeek && taskDate <= endOfWeek;
-                }).length;
+                });
+                
+                const thisWeek = thisWeekTasks.length;
+                addDebugInfo(`This week tasks: ${thisWeek} (${thisWeekTasks.map(t => t.properties.Task).join(', ')})`);
 
                 const completionRate = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0;
 
-                // Update display with actual data
+                // Update display
                 document.getElementById('totalTasks').textContent = totalTasks;
                 document.getElementById('highPriority').textContent = highPriority;
                 document.getElementById('thisWeek').textContent = thisWeek;
@@ -328,25 +332,14 @@
                 
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 updateApiStatus('success');
-
-                // Hide setup notice on successful connection
-                document.getElementById('setupNotice').style.display = 'none';
+                addDebugInfo('Metrics updated successfully!');
 
             } catch (error) {
                 console.error('Error fetching data:', error);
-                
-                // Show error state
-                let errorMsg = 'Error';
-                if (error.message.includes('token')) {
-                    errorMsg = 'Token';
-                } else if (error.message.includes('404')) {
-                    errorMsg = 'Proxy';
-                } else if (error.message.includes('unauthorized')) {
-                    errorMsg = 'Auth';
-                }
+                addDebugInfo(`Error: ${error.message}`);
                 
                 ['totalTasks', 'highPriority', 'thisWeek', 'completed', 'inProgress', 'completion'].forEach(id => {
-                    document.getElementById(id).innerHTML = `<span class="error">${errorMsg}</span>`;
+                    document.getElementById(id).innerHTML = `<span class="error">Error</span>`;
                 });
                 
                 updateApiStatus('error');
@@ -387,6 +380,7 @@
         }
 
         // Initial load
+        addDebugInfo('Widget initialized');
         updateMetrics();
 
         // Auto-refresh every 2 minutes
