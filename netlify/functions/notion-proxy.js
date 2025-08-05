@@ -1,152 +1,168 @@
 // netlify/functions/notion-proxy.js
+const { Client } = require('@notionhq/client');
+
 exports.handler = async (event, context) => {
-  // Only allow POST requests
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
-  // CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json'
-  };
-
-  // Handle preflight requests
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
-    };
-  }
-
-  try {
-    const { token, tasksDbId, milestonesDbId } = JSON.parse(event.body);
-
-    if (!token || !tasksDbId || !milestonesDbId) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Missing token, tasksDbId, or milestonesDbId' })
-      };
-    }
-
-    // Fetch Tasks Bank database
-    const tasksResponse = await fetch(`https://api.notion.com/v1/databases/${tasksDbId}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Notion-Version': '2022-06-28',
+    // Enable CORS
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        page_size: 100
-      })
-    });
+    };
 
-    if (!tasksResponse.ok) {
-      const errorText = await tasksResponse.text();
-      return {
-        statusCode: tasksResponse.status,
-        headers,
-        body: JSON.stringify({ 
-          error: `Tasks API error: ${tasksResponse.status}`,
-          details: errorText
-        })
-      };
+    // Handle preflight requests
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers,
+            body: ''
+        };
     }
 
-    // Fetch Weekly Milestones database
-    const milestonesResponse = await fetch(`https://api.notion.com/v1/databases/${milestonesDbId}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        page_size: 100
-      })
-    });
+    try {
+        const { token, milestonesDbId, endpoint = 'databases', action = 'query' } = JSON.parse(event.body);
 
-    if (!milestonesResponse.ok) {
-      const errorText = await milestonesResponse.text();
-      return {
-        statusCode: milestonesResponse.status,
-        headers,
-        body: JSON.stringify({ 
-          error: `Milestones API error: ${milestonesResponse.status}`,
-          details: errorText
-        })
-      };
-    }
-
-    const tasksData = await tasksResponse.json();
-    const milestonesData = await milestonesResponse.json();
-
-    // Create a map of milestone URLs to milestone data for quick lookup
-    const milestonesMap = {};
-    milestonesData.results.forEach(milestone => {
-      milestonesMap[milestone.url] = milestone;
-    });
-
-    // Enrich tasks with milestone completion status
-    const enrichedTasks = tasksData.results.map(task => {
-      // Get linked milestones
-      const linkedMilestones = task.properties['Linked to Weekly Milestone']?.relation || [];
-      
-      // Find completion status from linked milestones
-      let isCompleted = false;
-      let isInProgress = false;
-      let milestoneData = null;
-
-      if (linkedMilestones.length > 0) {
-        // Get the first linked milestone (assuming one-to-one relationship)
-        const milestoneUrl = linkedMilestones[0].id;
-        milestoneData = Object.values(milestonesMap).find(m => m.id === milestoneUrl);
-        
-        if (milestoneData) {
-          isCompleted = milestoneData.properties.Completed?.checkbox === true;
-          // You can define "in progress" logic based on your workflow
-          // For now, let's say in progress = has milestone but not completed
-          isInProgress = !isCompleted;
+        if (!token) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Notion token is required' })
+            };
         }
-      }
 
-      return {
-        ...task,
-        // Add computed status based on milestone
-        computedStatus: isCompleted ? '✅ Completed' : 
-                       isInProgress ? '🚀 In Progress' : 
-                       task.properties.Status?.select?.name || '📝 Draft',
-        milestoneData: milestoneData
-      };
-    });
+        const notion = new Client({ auth: token });
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        results: enrichedTasks,  // Change from 'tasks' to 'results' to match expected format
-        milestones: milestonesData.results,
-        totalTasks: enrichedTasks.length,
-        tasksWithMilestones: enrichedTasks.filter(t => t.milestoneData).length
-      })
-    };
+        // Handle milestones database query
+        if (milestonesDbId && endpoint === 'databases' && action === 'query') {
+            try {
+                // Query milestones with all properties
+                const milestonesResponse = await notion.databases.query({
+                    database_id: milestonesDbId,
+                    page_size: 100,
+                    sorts: [
+                        {
+                            property: 'Week',
+                            direction: 'ascending'
+                        }
+                    ]
+                });
 
-  } catch (error) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ 
-        error: 'Internal server error',
-        details: error.message
-      })
-    };
-  }
+                // Process milestones to extract all relevant information
+                const processedMilestones = milestonesResponse.results.map(page => {
+                    const props = page.properties;
+                    
+                    // Extract week number from Week select property
+                    const weekName = props.Week?.select?.name || '';
+                    const weekNumber = parseInt(weekName.replace('Week ', '') || '0');
+                    
+                    // Calculate if it's the current week
+                    const currentDate = new Date();
+                    const isCurrentWeek = props['Is Current Week']?.formula?.boolean || false;
+                    const isCurrentAuto = props['Is Current (Auto)']?.rollup?.array?.[0]?.checkbox || false;
+                    
+                    return {
+                        id: page.id,
+                        properties: props,
+                        // Add computed fields for easier access
+                        computed: {
+                            weekNumber,
+                            isCurrentWeek: isCurrentWeek || isCurrentAuto,
+                            completionStatus: props.Completed?.checkbox ? '✅ Completed' : '⏳ In Progress'
+                        }
+                    };
+                });
+
+                // Get unique focus areas and weeks for summary
+                const focusAreas = [...new Set(processedMilestones
+                    .map(m => m.properties['Focus Area']?.select?.name)
+                    .filter(Boolean))];
+                
+                const weeks = [...new Set(processedMilestones
+                    .map(m => m.properties.Week?.select?.name)
+                    .filter(Boolean))];
+
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({
+                        results: processedMilestones,
+                        hasMore: milestonesResponse.has_more,
+                        nextCursor: milestonesResponse.next_cursor,
+                        summary: {
+                            totalMilestones: processedMilestones.length,
+                            completedMilestones: processedMilestones.filter(m => 
+                                m.properties.Completed?.checkbox
+                            ).length,
+                            focusAreas,
+                            weeks,
+                            currentWeekMilestones: processedMilestones.filter(m => 
+                                m.computed.isCurrentWeek
+                            ).length
+                        }
+                    })
+                };
+
+            } catch (error) {
+                console.error('Notion API Error:', error);
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ 
+                        error: 'Failed to query milestones database',
+                        details: error.message 
+                    })
+                };
+            }
+        }
+
+        // Handle other database queries (backward compatibility)
+        if (endpoint === 'databases' && action === 'query') {
+            const { database_id, filter, sorts, page_size = 100 } = JSON.parse(event.body);
+            
+            const response = await notion.databases.query({
+                database_id,
+                filter,
+                sorts,
+                page_size
+            });
+
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify(response)
+            };
+        }
+
+        // Handle page retrieval
+        if (endpoint === 'pages' && action === 'retrieve') {
+            const { page_id } = JSON.parse(event.body);
+            
+            const response = await notion.pages.retrieve({
+                page_id
+            });
+
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify(response)
+            };
+        }
+
+        return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'Invalid endpoint or action' })
+        };
+
+    } catch (error) {
+        console.error('Proxy error:', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ 
+                error: 'Internal server error',
+                message: error.message 
+            })
+        };
+    }
 };
