@@ -1,221 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
-    <header>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="X-UA-Compatible" content="IE=7">
-        <title>Project1 </title>
-        <link rel="stylesheet" type="text/css" href="resources/css/style.css">
-    </header>
-    <body>
-        <div class="header-container">
-            <div class="logo">
-               <img src="resources/images/ic-logo.svg" alt="logo">
-                <span class="logo-title1">COMLAR</span>
-                <span class="logo-title2">Academy</span>  
-            </div>
-            <div class="nav-links">
-                <ol>
-                    <li><a href="#">On campus</a></li>
-                    <li><a href="#">Online</a></li>
-                    <li><a href="#">or companies</a></li>
-                    <li><a href="#">Sign in</a></li>
-                </ol>
-            </div>
-               
-          
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Metrics Widget</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: transparent;
+            font-size: 14px;
+        }
+
+        .widget {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .header h2 {
+            margin: 0;
+            color: #1a202c;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: #48bb78;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #5a67d8;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .loading {
+            color: #a0aec0;
+            font-size: 1rem;
+        }
+
+        .error {
+            color: #e53e3e;
+            font-size: 0.9rem;
+        }
+
+        .update-time {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #718096;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .api-status {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #c53030;
+        }
+    </style>
+</head>
+<body>
+    <div class="widget">
+        <div class="header">
+            <h2>
+                <div class="live-dot"></div>
+                Live Metrics
+                <span id="apiStatus" class="api-status"></span>
+            </h2>
+            <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">↻</button>
         </div>
-        <div class="mob-header">
-            <div class="header-items">
-                <img href="#" src="Resources/images/ic-login.svg" alt="">
-            </div>
-            <div class="header-items">
-                <img src="Resources/images/ic-logo.svg" alt="">
-            </div>
-            <div class="header-items">
-                <img src="Resources/images/ic-on-campus.svg" alt="">
-            </div>
-            <div class="header-items">
-                <img src="Resources/images/ic-online.svg" alt="">
+
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-value" id="totalTasks">
+                    <span class="loading">...</span>
+                </div>
+                <div class="metric-label">Total Tasks</div>
             </div>
 
+            <div class="metric">
+                <div class="metric-value" id="highPriority">
+                    <span class="loading">...</span>
+                </div>
+                <div class="metric-label">High Priority</div>
+            </div>
 
+            <div class="metric">
+                <div class="metric-value" id="thisWeek">
+                    <span class="loading">...</span>
+                </div>
+                <div class="metric-label">This Week</div>
+            </div>
 
+            <div class="metric">
+                <div class="metric-value" id="completed">
+                    <span class="loading">...</span>
+                </div>
+                <div class="metric-label">Completed</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-value" id="inProgress">
+                    <span class="loading">...</span>
+                </div>
+                <div class="metric-label">In Progress</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-value" id="completion">
+                    <span class="loading">...</span>
+                </div>
+                <div class="metric-label">Completion %</div>
+            </div>
         </div>
 
-       <div class="card1">
-              <img src="resources/images/banner.jpg" alt="">
-              <div class="card1-text">
-                <h1>Learn something new everyday</h1>
-                <h2>Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus iusto, alias culpa tota</h2>
-                <a href="#">Start here</a>
-                </div>
-          </div>
-
-        <div class="card2">
-            <div class="left2">
-                <img src="Resources/images/information-main.jpg" alt="">
-                <h1>It does not hurt to keep practicing</h1>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Facilis quo quia quis eum. Autem, ex in, eligendi et quidem vitae, sit perferendis natus fuga similique quisquam placeat laborum omnis a?</p>
-                <h2>Emanuel,Sr Stratigist at Hiting.com</h2>
-            </div>
-
-            <div class="right2">
-
-                <div class="top">
-                    <img src="Resources/images/information-orientation.jpg" alt="">
-                    <div class="text">
-                        <h1>Orientaion date</h1>
-                        <h3>Tue 10/11 & Wed 10/12: 8am-3pm</h3>
-                        <a href="#">Read more</a>
-                    </div>
-                </div>
-
-                <div class="middle">
-                    <img src="Resources/images/information-campus.jpg" alt="">
-                    <div class="text">
-                        
-                        <h1>Our campus</h1>
-                        <h3>Find which campus is close by you</h3>
-                        <a href="#">Read more</a>
-                </div>
-                    
-                </div>
-
-                <div class="bottom">
-                    <img src="Resources/images/information-guest-lecture.jpg" alt="">
-                    <div class="text">
-                        
-                        <h1>Our guest lecture</h1>
-                        <h3>Join a keynote with Oliver Sack about music in medical tratment</h3>
-                        <a href="#">Read more</a>
-                    </div>
-                   
-                </div>
-            </div>
-
-
-
+        <div class="update-time">
+            Last updated: <span id="lastUpdate">Never</span>
         </div>
+    </div>
 
-       
+    <script>
+        // 🔥 IMPORTANT: Replace with your actual Notion integration token
+        const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP';
+        const TASKS_DB_ID = 'e1cdae69-6ef0-442f-9777-01c2d7473b66';
 
-        <div class="learning-container">
-            <h1 class="learning-title">Start Learning</h1>
-            <div class="learning-category">
-                <div class="cat1">
-                    <img src="resources/images/course-software.jpg" alt="">
-                   <div class="card-container">
-                    <h1>Software Engineer</h1>
-                    <h2>Courses</h2>
-                    <p>Web Development,Mobile Development ,iOT,APIs</p>
+        let isLoading = false;
 
-                    </div> 
-                    
-                </div>
-                <div class="cat1">
-                    <img src="resources/images/course-computer-art.jpg" alt="">
-                    <div class="card-container">
-                        <h1>Computer Art</h1>
-                        <h2>Courses</h2>
-                        <p>Web Development,Mobile Development ,iOT,APIs</p>
-    
-                    </div>
-                    
-                </div>
+        async function fetchNotionTasks() {
+            if (!NOTION_TOKEN || NOTION_TOKEN === 'PASTE_YOUR_TOKEN_HERE') {
+                throw new Error('Please add your Notion integration token');
+            }
 
-                <div class="cat1">
-                    <img src="resources/images/course-design.jpg" alt="">
-                    <div class="card-container">
-                        <h1>Design</h1>
-                        <h2>Courses</h2>
-                        <p>User Experience Design, User Reasearch, Visual Design </p>
-    
-                    </div>
-                   
-                </div>
+            const response = await fetch(`https://api.notion.com/v1/databases/${TASKS_DB_ID}/query`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${NOTION_TOKEN}`,
+                    'Notion-Version': '2022-06-28',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    page_size: 100
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            return data.results;
+        }
+
+        async function updateMetrics() {
+            if (isLoading) return;
+            isLoading = true;
+
+            try {
+                // Show loading state
+                updateApiStatus('loading');
                 
-                <div class="cat1">
-                    <img src="resources/images/course-data.jpg" alt="">
-                    <div class="card-container">
-                        <h1>Date</h1>
-                        <h2>Courses</h2>
-                        <p>Data Science, Big Data,SQL ,Data Visualization</p>
-    
-                    </div>
-                    
-                </div>
-               
-                <div class="cat1">
-                    <img src="resources/images/course-business.jpg" alt="">
-                   <div class="card-container">
-                    <h1>Business</h1>
-                    <h2>Courses</h2>
-                    <p>Product Development, Business Development, Startup</p>
+                const tasks = await fetchNotionTasks();
+                
+                // Calculate metrics
+                const totalTasks = tasks.length;
+                const highPriority = tasks.filter(t => t.properties.Priority?.select?.name === '🔥 High').length;
+                const completed = tasks.filter(t => t.properties.Status?.select?.name === '✅ Completed').length;
+                const inProgress = tasks.filter(t => t.properties.Status?.select?.name === '🚀 In Progress').length;
+                
+                // Calculate this week's tasks
+                const now = new Date();
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - now.getDay());
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                
+                const thisWeek = tasks.filter(task => {
+                    const dueDate = task.properties['Due Date']?.date?.start;
+                    if (!dueDate) return false;
+                    const taskDate = new Date(dueDate);
+                    return taskDate >= startOfWeek && taskDate <= endOfWeek;
+                }).length;
 
-                   </div>
+                const completionRate = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0;
 
-                    
-                </div>
+                // Update display
+                document.getElementById('totalTasks').textContent = totalTasks;
+                document.getElementById('highPriority').textContent = highPriority;
+                document.getElementById('thisWeek').textContent = thisWeek;
+                document.getElementById('completed').textContent = completed;
+                document.getElementById('inProgress').textContent = inProgress;
+                document.getElementById('completion').textContent = completionRate + '%';
+                
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                updateApiStatus('success');
 
-                <div class="cat1">
-                    <img src="resources/images/course-marketing.jpg" alt="">
-                    
-                    <div class="card-container">
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                
+                // Show error state
+                const errorMsg = error.message.includes('token') ? 'Token Error' : 'API Error';
+                ['totalTasks', 'highPriority', 'thisWeek', 'completed', 'inProgress', 'completion'].forEach(id => {
+                    document.getElementById(id).innerHTML = `<span class="error">${errorMsg}</span>`;
+                });
+                
+                updateApiStatus('error');
+            } finally {
+                isLoading = false;
+            }
+        }
 
-                        <h1>Marketing</h1>
-                        <h2>Courses</h2>
-                        <p>Analytics, Content Marketing, Mobile Marketing</p>
-    
-                    </div>
-                   
-                </div>
-            </div>
-        </div>
-        <div class="exhibit-container">
-            <h1 class="ex-title"> Thesis exhibit</h1>
-            <div class="ex-container2">
-            <div class="ex-left">
+        function updateApiStatus(status) {
+            const statusEl = document.getElementById('apiStatus');
+            switch(status) {
+                case 'loading':
+                    statusEl.textContent = 'Loading...';
+                    statusEl.className = 'api-status';
+                    break;
+                case 'success':
+                    statusEl.textContent = 'Connected';
+                    statusEl.className = 'api-status status-success';
+                    break;
+                case 'error':
+                    statusEl.textContent = 'Error';
+                    statusEl.className = 'api-status status-error';
+                    break;
+            }
+        }
 
-                <div class="video">
-                    <video src="Resources/videos/thesis.mp4"  type="video/mp4" width="550"  ></video>
-                </div>
-                <div class="video-text">
-                    <h1>Lorem, ipsum.</h1>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam quod ipsam minima sunt laudantium, sint exercitationem alias a reiciendis tenetur similique reprehenderit facilis omnis quasi!</p>
-                </div>
+        async function refreshData() {
+            const btn = document.getElementById('refreshBtn');
+            btn.textContent = '⟳';
+            btn.disabled = true;
             
-            </div>
+            await updateMetrics();
+            
+            setTimeout(() => {
+                btn.textContent = '↻';
+                btn.disabled = false;
+            }, 1000);
+        }
 
+        // Initial load
+        updateMetrics();
 
-            <div class="ex-right">
-                <div class="right-top">
-                    <img src="Resources/images/thesis-fisma.jpg" alt="">
-                    <div class="img-text">
-                        <h1>Lorem ipsum dolor sit amet.</h1>
-                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Rerum, qui?</p>
-                    </div>
-                </div>
-
-                <div class="right-bottom">
-                    <img src="Resources/images/thesis-now-and-then.jpg" alt="">
-                    <div class="img-text">
-                        <h1>Lorem ipsum dolor sit amet.</h1>
-                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Rerum, qui?</p>
-                    </div>
-                </div>
-            </div>
-            </div>
-       
-        </div>
-
-
->>>>>>> 0199840fdcf0d99f96f9476a4c991d1589c35940
-
-        
-    </body>
-
+        // Auto-refresh every 2 minutes
+        setInterval(updateMetrics, 120000);
+    </script>
+</body>
 </html>
-
-
-
