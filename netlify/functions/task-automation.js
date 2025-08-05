@@ -36,29 +36,41 @@ exports.handler = async (event, context) => {
 
         const notion = new Client({ auth: token });
 
-        // Step 1: Query Task Bank for all "📅 Planned" tasks
-        console.log('Querying Task Bank for planned tasks...');
+        // Step 1: Query Task Bank for tasks that need milestones
+        // Using the same filter as the Python script
+        console.log('Querying Task Bank for tasks needing milestones...');
+        
         const tasksResponse = await notion.databases.query({
             database_id: TASKS_DB_ID,
             filter: {
-                property: 'Status',
-                select: {
-                    equals: '📅 Planned'
-                }
+                and: [
+                    {
+                        property: "Week Reference",
+                        relation: {
+                            is_not_empty: true
+                        }
+                    },
+                    {
+                        property: "Linked to Weekly Milestone",
+                        relation: {
+                            is_empty: true
+                        }
+                    }
+                ]
             },
             page_size: 100
         });
 
-        const plannedTasks = tasksResponse.results;
-        console.log(`Found ${plannedTasks.length} planned tasks`);
+        const candidateTasks = tasksResponse.results;
+        console.log(`Found ${candidateTasks.length} tasks needing milestones`);
 
-        if (plannedTasks.length === 0) {
+        if (candidateTasks.length === 0) {
             return {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
                     success: true,
-                    message: 'No planned tasks found to process',
+                    message: 'No tasks found that need milestones',
                     summary: {
                         tasksProcessed: 0,
                         milestonesCreated: 0,
@@ -68,47 +80,37 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Step 2: Process each planned task
+        // Step 2: Process each task
         let milestonesCreated = 0;
         let tasksLinked = 0;
         const errors = [];
 
-        for (const task of plannedTasks) {
+        for (const task of candidateTasks) {
             try {
                 const taskProps = task.properties;
+                
+                // Get task title
                 const taskName = taskProps.Task?.title?.[0]?.text?.content || 'Untitled Task';
+                
+                // Get other properties
                 const focusArea = taskProps['Focus Area']?.select?.name;
-                const weekReference = taskProps['Week Reference']?.relation?.[0]?.id;
-                const priority = taskProps.Priority?.select?.name || 'P3';
+                const priority = taskProps.Priority?.select?.name;
                 const notes = taskProps.Notes?.rich_text?.[0]?.text?.content || '';
+                const weekReference = taskProps['Week Reference']?.relation || [];
                 
                 console.log(`Processing task: ${taskName}`);
+                console.log(`  Focus Area: ${focusArea}`);
+                console.log(`  Priority: ${priority}`);
+                console.log(`  Week Reference found: ${weekReference.length > 0}`);
 
-                // Skip if no week reference
-                if (!weekReference) {
-                    console.log(`Skipping task "${taskName}" - no week reference`);
-                    continue;
-                }
-
-                // Get week details from Week Reference
-                let weekNumber = null;
-                let weekStart = null;
-                let weekEnd = null;
-                
-                try {
-                    const weekPage = await notion.pages.retrieve({ page_id: weekReference });
-                    const weekTitle = weekPage.properties.Name?.title?.[0]?.text?.content || '';
-                    // Extract week number from title (e.g., "Week 1 - Aug 4-10, 2025")
-                    const weekMatch = weekTitle.match(/Week (\d+)/);
-                    if (weekMatch) {
-                        weekNumber = `Week ${weekMatch[1]}`;
-                    }
-                    
-                    // Get dates from week reference
-                    weekStart = weekPage.properties['Start Date']?.date?.start;
-                    weekEnd = weekPage.properties['End Date']?.date?.start;
-                } catch (error) {
-                    console.log(`Could not retrieve week details: ${error.message}`);
+                // Determine deadline type based on priority
+                let deadlineType = 'Target'; // Default
+                if (priority === '🔥 High') {
+                    deadlineType = 'Critical (Fixed)';
+                } else if (priority === '⚡ Medium') {
+                    deadlineType = 'Target';
+                } else if (priority === '💧 Low') {
+                    deadlineType = 'Flexible';
                 }
 
                 // Step 3: Create milestone in Weekly Milestones database
@@ -120,68 +122,70 @@ exports.handler = async (event, context) => {
                                 text: { content: taskName }
                             }]
                         },
-                        'Focus Area': focusArea ? {
-                            select: { name: focusArea }
-                        } : undefined,
-                        'Week': weekNumber ? {
-                            select: { name: weekNumber }
-                        } : undefined,
-                        'Week Reference': {
-                            relation: [{ id: weekReference }]
+                        'Notes': {
+                            rich_text: [{
+                                text: { 
+                                    content: `Auto-created from Task Bank\n\nOriginal Notes: ${notes}\nPriority: ${priority || 'Not set'}`
+                                }
+                            }]
                         },
                         'Deadline Type': {
-                            select: { 
-                                name: priority === 'P1' ? 'Critical (Fixed)' : 
-                                      priority === 'P2' ? 'Target' : 'Flexible'
-                            }
+                            select: { name: deadlineType }
                         },
                         'Completed': {
                             checkbox: false
-                        },
-                        'Notes': notes ? {
-                            rich_text: [{
-                                text: { content: `Auto-created from Task Bank\n\nOriginal Notes: ${notes}` }
-                            }]
-                        } : {
-                            rich_text: [{
-                                text: { content: 'Auto-created from Task Bank' }
-                            }]
                         }
                     }
                 };
 
-                // Add due date if we have week end date
-                if (weekEnd) {
-                    milestoneData.properties['Due Date'] = {
-                        date: { start: weekEnd }
+                // Add focus area if available
+                if (focusArea) {
+                    milestoneData.properties['Focus Area'] = {
+                        select: { name: focusArea }
                     };
                 }
 
-                // Add week start date if available
-                if (weekStart) {
-                    milestoneData.properties['Week Start Date'] = {
-                        date: { start: weekStart }
+                // Add Week Reference if we have it
+                if (weekReference.length > 0) {
+                    milestoneData.properties['Week Reference'] = {
+                        relation: weekReference
                     };
+                    console.log('  Added Week Reference to milestone');
+                    
+                    // Try to determine the Week number from the Week Reference
+                    try {
+                        const weekRefId = weekReference[0].id;
+                        const weekPage = await notion.pages.retrieve({ page_id: weekRefId });
+                        const weekTitle = weekPage.properties.Name?.title?.[0]?.text?.content || '';
+                        const weekMatch = weekTitle.match(/Week (\d+)/);
+                        if (weekMatch) {
+                            milestoneData.properties['Week'] = {
+                                select: { name: `Week ${weekMatch[1]}` }
+                            };
+                            console.log(`  Set Week to: Week ${weekMatch[1]}`);
+                        }
+                    } catch (weekError) {
+                        console.log('  Could not determine week number from reference');
+                    }
+                } else {
+                    console.log('  No Week Reference data available');
                 }
 
                 const milestone = await notion.pages.create(milestoneData);
                 milestonesCreated++;
-                console.log(`Created milestone: ${taskName}`);
+                console.log(`✅ Created milestone: ${milestone.id}`);
 
-                // Step 4: Update task status to "🔄 In Progress" and link milestone
+                // Step 4: Link the task back to the milestone
                 await notion.pages.update({
                     page_id: task.id,
                     properties: {
-                        'Status': {
-                            select: { name: '🔄 In Progress' }
-                        },
-                        'Milestone': {
+                        'Linked to Weekly Milestone': {
                             relation: [{ id: milestone.id }]
                         }
                     }
                 });
                 tasksLinked++;
-                console.log(`Updated task status and linked milestone`);
+                console.log('✅ Linked task back to milestone');
 
             } catch (error) {
                 console.error(`Error processing task: ${error.message}`);
@@ -198,9 +202,9 @@ exports.handler = async (event, context) => {
             headers,
             body: JSON.stringify({
                 success: true,
-                message: `Processed ${plannedTasks.length} tasks`,
+                message: `Processed ${candidateTasks.length} tasks`,
                 summary: {
-                    tasksProcessed: plannedTasks.length,
+                    tasksProcessed: candidateTasks.length,
                     milestonesCreated,
                     tasksLinked,
                     errors: errors.length
@@ -211,13 +215,27 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('Automation error:', error);
+        console.error('Error stack:', error.stack);
+        
+        // Provide more detailed error information
+        let errorMessage = error.message;
+        if (error.code === 'object_not_found') {
+            errorMessage = 'Database not found. Please check the database IDs.';
+        } else if (error.code === 'unauthorized') {
+            errorMessage = 'Invalid Notion token or insufficient permissions.';
+        } else if (error.code === 'validation_error') {
+            errorMessage = 'Invalid data format. Check property names and types.';
+        }
+        
         return {
             statusCode: 500,
             headers,
             body: JSON.stringify({ 
                 success: false,
                 error: 'Automation failed',
-                message: error.message 
+                message: errorMessage,
+                details: error.body || error.message,
+                code: error.code
             })
         };
     }
