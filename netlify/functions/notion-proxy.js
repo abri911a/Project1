@@ -1,9 +1,5 @@
-// netlify/functions/task-automation.js
+// netlify/functions/notion-proxy.js
 const { Client } = require('@notionhq/client');
-
-// Database IDs
-const TASKS_DB_ID = 'e1cdae69-6ef0-442f-9777-01c2d7473b66';
-const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
 
 exports.handler = async (event, context) => {
     // Enable CORS
@@ -24,7 +20,8 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { token } = JSON.parse(event.body);
+        const body = JSON.parse(event.body);
+        const { token, milestonesDbId, endpoint, action } = body;
 
         if (!token) {
             return {
@@ -36,255 +33,184 @@ exports.handler = async (event, context) => {
 
         const notion = new Client({ auth: token });
 
-        // Step 1: Query Task Bank for all "📅 Planned" tasks
-        console.log('Querying Task Bank for planned tasks...');
-        
-        // First, let's try to get the database schema to understand the properties
-        let statusPropertyName = 'Status';
-        let taskPropertyName = 'Task';
-        let focusAreaPropertyName = 'Focus Area';
-        let weekReferencePropertyName = 'Week Reference';
-        let priorityPropertyName = 'Priority';
-        let notesPropertyName = 'Notes';
-        let milestonePropertyName = 'Milestone';
-        
-        try {
-            const dbInfo = await notion.databases.retrieve({
-                database_id: TASKS_DB_ID
-            });
-            
-            // Log the properties to help debug
-            console.log('Task Bank properties:', Object.keys(dbInfo.properties));
-            
-            // Find the actual property names (they might be different)
-            for (const [key, prop] of Object.entries(dbInfo.properties)) {
-                if (prop.type === 'select' && key.toLowerCase().includes('status')) {
-                    statusPropertyName = key;
-                }
-                if (prop.type === 'title') {
-                    taskPropertyName = key;
-                }
+        // Handle milestones database query
+        if (milestonesDbId && (!endpoint || endpoint === 'databases') && (!action || action === 'query')) {
+            try {
+                console.log('Querying milestones database:', milestonesDbId);
+                
+                // Query milestones with all properties
+                const milestonesResponse = await notion.databases.query({
+                    database_id: milestonesDbId,
+                    page_size: 100,
+                    sorts: [
+                        {
+                            property: 'Week',
+                            direction: 'ascending'
+                        }
+                    ]
+                });
+
+                console.log(`Found ${milestonesResponse.results.length} milestones`);
+
+                // Calculate current week based on 12-week start date
+                const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1 starts Aug 4, 2025
+                const currentDate = new Date();
+                const daysSinceStart = Math.floor((currentDate - TWELVE_WEEK_START) / (1000 * 60 * 60 * 24));
+                const currentWeekNumber = Math.min(Math.max(Math.floor(daysSinceStart / 7) + 1, 1), 12);
+                
+                // Process milestones to extract all relevant information
+                const processedMilestones = milestonesResponse.results.map(page => {
+                    const props = page.properties;
+                    
+                    // Extract week number from Week select property
+                    const weekName = props.Week?.select?.name || '';
+                    const weekNumber = parseInt(weekName.replace('Week ', '') || '0');
+                    
+                    // Check if milestone is in current week
+                    const isCurrentWeek = weekNumber === currentWeekNumber;
+                    
+                    // Also check formula/rollup fields if they exist
+                    const isCurrentFormula = props['Is Current Week']?.formula?.boolean || false;
+                    const isCurrentAuto = props['Is Current (Auto)']?.rollup?.array?.[0]?.checkbox || false;
+                    
+                    return {
+                        id: page.id,
+                        properties: props,
+                        // Add computed fields for easier access
+                        computed: {
+                            weekNumber,
+                            isCurrentWeek: isCurrentWeek || isCurrentFormula || isCurrentAuto,
+                            completionStatus: props.Completed?.checkbox ? '✅ Completed' : '⏳ In Progress',
+                            dueDate: props['Due Date']?.date?.start || null,
+                            weekStartDate: props['Week Start Date']?.date?.start || null
+                        }
+                    };
+                });
+
+                // Get unique focus areas and weeks for summary
+                const focusAreas = [...new Set(processedMilestones
+                    .map(m => m.properties['Focus Area']?.select?.name)
+                    .filter(Boolean))];
+                
+                const weeks = [...new Set(processedMilestones
+                    .map(m => m.properties.Week?.select?.name)
+                    .filter(Boolean))];
+
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({
+                        results: processedMilestones,
+                        hasMore: milestonesResponse.has_more,
+                        nextCursor: milestonesResponse.next_cursor,
+                        summary: {
+                            totalMilestones: processedMilestones.length,
+                            completedMilestones: processedMilestones.filter(m => 
+                                m.properties.Completed?.checkbox
+                            ).length,
+                            focusAreas,
+                            weeks,
+                            currentWeek: currentWeekNumber,
+                            currentWeekMilestones: processedMilestones.filter(m => 
+                                m.computed.isCurrentWeek
+                            ).length,
+                            weekBreakdown: weeks.map(week => {
+                                const weekNum = parseInt(week.replace('Week ', '') || '0');
+                                const weekMilestones = processedMilestones.filter(m => 
+                                    m.computed.weekNumber === weekNum
+                                );
+                                return {
+                                    week: week,
+                                    weekNumber: weekNum,
+                                    isCurrent: weekNum === currentWeekNumber,
+                                    total: weekMilestones.length,
+                                    completed: weekMilestones.filter(m => m.properties.Completed?.checkbox).length
+                                };
+                            })
+                        }
+                    })
+                };
+
+            } catch (error) {
+                console.error('Notion API Error:', error);
+                console.error('Error details:', error.message, error.code);
+                
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ 
+                        error: 'Failed to query milestones database',
+                        details: error.message,
+                        code: error.code
+                    })
+                };
             }
-        } catch (error) {
-            console.log('Could not retrieve database schema, using default property names');
         }
-        
-        const tasksResponse = await notion.databases.query({
-            database_id: TASKS_DB_ID,
-            filter: {
-                property: statusPropertyName,
-                select: {
-                    equals: '📅 Planned'
-                }
-            },
-            page_size: 100
-        });
 
-        const plannedTasks = tasksResponse.results;
-        console.log(`Found ${plannedTasks.length} planned tasks`);
+        // Handle other database queries (backward compatibility)
+        if (endpoint === 'databases' && action === 'query') {
+            const { database_id, filter, sorts, page_size = 100 } = body;
+            
+            const response = await notion.databases.query({
+                database_id,
+                filter,
+                sorts,
+                page_size
+            });
 
-        if (plannedTasks.length === 0) {
             return {
                 statusCode: 200,
                 headers,
-                body: JSON.stringify({
-                    success: true,
-                    message: 'No planned tasks found to process',
-                    summary: {
-                        tasksProcessed: 0,
-                        milestonesCreated: 0,
-                        tasksLinked: 0
-                    }
-                })
+                body: JSON.stringify(response)
             };
         }
 
-        // Step 2: Process each planned task
-        let milestonesCreated = 0;
-        let tasksLinked = 0;
-        const errors = [];
+        // Handle page retrieval
+        if (endpoint === 'pages' && action === 'retrieve') {
+            const { page_id } = body;
+            
+            const response = await notion.pages.retrieve({
+                page_id
+            });
 
-        for (const task of plannedTasks) {
-            try {
-                const taskProps = task.properties;
-                const taskName = taskProps[taskPropertyName]?.title?.[0]?.text?.content || 
-                               taskProps.Task?.title?.[0]?.text?.content || 
-                               taskProps.Name?.title?.[0]?.text?.content || 
-                               'Untitled Task';
-                
-                const focusArea = taskProps[focusAreaPropertyName]?.select?.name || 
-                                taskProps['Focus Area']?.select?.name;
-                
-                const weekReference = taskProps[weekReferencePropertyName]?.relation?.[0]?.id || 
-                                    taskProps['Week Reference']?.relation?.[0]?.id;
-                
-                const priority = taskProps[priorityPropertyName]?.select?.name || 
-                               taskProps.Priority?.select?.name || 'P3';
-                
-                const notes = taskProps[notesPropertyName]?.rich_text?.[0]?.text?.content || 
-                            taskProps.Notes?.rich_text?.[0]?.text?.content || '';
-                
-                console.log(`Processing task: ${taskName}`);
-                console.log(`Properties found: Focus Area=${focusArea}, Week Ref=${weekReference}, Priority=${priority}`);
-
-                // Skip if no week reference
-                if (!weekReference) {
-                    console.log(`Skipping task "${taskName}" - no week reference`);
-                    errors.push({
-                        task: taskName,
-                        error: 'No week reference found'
-                    });
-                    continue;
-                }
-
-                // Get week details from Week Reference
-                let weekNumber = null;
-                let weekStart = null;
-                let weekEnd = null;
-                
-                try {
-                    const weekPage = await notion.pages.retrieve({ page_id: weekReference });
-                    const weekTitle = weekPage.properties.Name?.title?.[0]?.text?.content || '';
-                    // Extract week number from title (e.g., "Week 1 - Aug 4-10, 2025")
-                    const weekMatch = weekTitle.match(/Week (\d+)/);
-                    if (weekMatch) {
-                        weekNumber = `Week ${weekMatch[1]}`;
-                    }
-                    
-                    // Get dates from week reference
-                    weekStart = weekPage.properties['Start Date']?.date?.start;
-                    weekEnd = weekPage.properties['End Date']?.date?.start;
-                } catch (error) {
-                    console.log(`Could not retrieve week details: ${error.message}`);
-                }
-
-                // Step 3: Create milestone in Weekly Milestones database
-                const milestoneData = {
-                    parent: { database_id: MILESTONES_DB_ID },
-                    properties: {
-                        'Task': {
-                            title: [{
-                                text: { content: taskName }
-                            }]
-                        },
-                        'Focus Area': focusArea ? {
-                            select: { name: focusArea }
-                        } : undefined,
-                        'Week': weekNumber ? {
-                            select: { name: weekNumber }
-                        } : undefined,
-                        'Week Reference': {
-                            relation: [{ id: weekReference }]
-                        },
-                        'Deadline Type': {
-                            select: { 
-                                name: priority === 'P1' ? 'Critical (Fixed)' : 
-                                      priority === 'P2' ? 'Target' : 'Flexible'
-                            }
-                        },
-                        'Completed': {
-                            checkbox: false
-                        },
-                        'Notes': notes ? {
-                            rich_text: [{
-                                text: { content: `Auto-created from Task Bank\n\nOriginal Notes: ${notes}` }
-                            }]
-                        } : {
-                            rich_text: [{
-                                text: { content: 'Auto-created from Task Bank' }
-                            }]
-                        }
-                    }
-                };
-
-                // Add due date if we have week end date
-                if (weekEnd) {
-                    milestoneData.properties['Due Date'] = {
-                        date: { start: weekEnd }
-                    };
-                }
-
-                // Add week start date if available
-                if (weekStart) {
-                    milestoneData.properties['Week Start Date'] = {
-                        date: { start: weekStart }
-                    };
-                }
-
-                const milestone = await notion.pages.create(milestoneData);
-                milestonesCreated++;
-                console.log(`Created milestone: ${taskName}`);
-
-                // Step 4: Update task status to "🔄 In Progress" and link milestone
-                const updateData = {
-                    page_id: task.id,
-                    properties: {}
-                };
-                
-                // Update status
-                updateData.properties[statusPropertyName] = {
-                    select: { name: '🔄 In Progress' }
-                };
-                
-                // Link milestone if we have a milestone property
-                if (milestonePropertyName in taskProps || 'Milestone' in taskProps) {
-                    updateData.properties[milestonePropertyName] = {
-                        relation: [{ id: milestone.id }]
-                    };
-                }
-                
-                await notion.pages.update(updateData);
-                tasksLinked++;
-                console.log(`Updated task status and linked milestone`);
-
-            } catch (error) {
-                console.error(`Error processing task: ${error.message}`);
-                errors.push({
-                    task: task.properties.Task?.title?.[0]?.text?.content || 'Unknown',
-                    error: error.message
-                });
-            }
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify(response)
+            };
         }
 
-        // Return summary
+        // Handle database retrieval
+        if (endpoint === 'databases' && action === 'retrieve') {
+            const { database_id } = body;
+            
+            const response = await notion.databases.retrieve({
+                database_id
+            });
+
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify(response)
+            };
+        }
+
         return {
-            statusCode: 200,
+            statusCode: 400,
             headers,
-            body: JSON.stringify({
-                success: true,
-                message: `Processed ${plannedTasks.length} tasks`,
-                summary: {
-                    tasksProcessed: plannedTasks.length,
-                    milestonesCreated,
-                    tasksLinked,
-                    errors: errors.length
-                },
-                errors: errors.length > 0 ? errors : undefined
-            })
+            body: JSON.stringify({ error: 'Invalid endpoint or action' })
         };
 
     } catch (error) {
-        console.error('Automation error:', error);
+        console.error('Proxy error:', error);
         console.error('Error stack:', error.stack);
-        
-        // Provide more detailed error information
-        let errorMessage = error.message;
-        if (error.code === 'object_not_found') {
-            errorMessage = 'Database not found. Please check the database IDs.';
-        } else if (error.code === 'unauthorized') {
-            errorMessage = 'Invalid Notion token or insufficient permissions.';
-        } else if (error.code === 'validation_error') {
-            errorMessage = 'Invalid data format. Check property names and types.';
-        }
         
         return {
             statusCode: 500,
             headers,
             body: JSON.stringify({ 
-                success: false,
-                error: 'Automation failed',
-                message: errorMessage,
-                details: error.body || error.message,
+                error: 'Internal server error',
+                message: error.message,
                 code: error.code
             })
         };
