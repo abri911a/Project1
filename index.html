@@ -75,9 +75,18 @@
             backdrop-filter: blur(10px);
         }
 
-        .refresh-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
+        .automation-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169) !important;
+            margin-right: 10px;
+        }
+
+        .automation-btn:hover {
+            background: linear-gradient(135deg, #38a169, #2f855a) !important;
+        }
+
+        .automation-btn:disabled {
+            background: rgba(255,255,255,0.1) !important;
+            opacity: 0.6;
         }
 
         .debug-toggle {
@@ -301,6 +310,9 @@
                 </div>
                 <span id="apiStatus" class="api-status status-loading">Connecting...</span>
                 <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
+                <button class="refresh-btn automation-btn" id="automationBtn" onclick="runAutomation()">
+                    <span>📅➡️📝 Convert Planned Tasks</span>
+                </button>
                 <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
                     <span>🔄 Refresh</span>
                 </button>
@@ -485,6 +497,7 @@
         // 🔥 Replace with your actual Notion integration token
         const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP';
         const PROXY_URL = '/.netlify/functions/notion-proxy';
+        const AUTOMATION_URL = '/.netlify/functions/task-automation';
         const TASKS_DB_ID = 'e1cdae69-6ef0-442f-9777-01c2d7473b66';
         const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
 
@@ -780,6 +793,69 @@
                     statusEl.textContent = 'Error';
                     statusEl.className = 'api-status status-error';
                     break;
+            }
+        }
+
+        async function runAutomation() {
+            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
+                addDebugInfo('Error: Please configure your Notion integration token');
+                alert('Please configure your Notion integration token first');
+                return;
+            }
+
+            const btn = document.getElementById('automationBtn');
+            const span = btn.querySelector('span');
+            const originalText = span.textContent;
+            
+            btn.disabled = true;
+            span.textContent = '📅➡️📝 Converting Tasks...';
+            
+            addDebugInfo('Converting planned tasks to milestones...');
+
+            try {
+                const response = await fetch(AUTOMATION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: NOTION_TOKEN
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Automation failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const { summary } = result;
+                    addDebugInfo(`✅ Conversion completed successfully!`);
+                    addDebugInfo(`📊 Summary: ${summary.tasksProcessed} planned tasks processed`);
+                    addDebugInfo(`✨ Created: ${summary.milestonesCreated} milestones with week references`);
+                    addDebugInfo(`🔗 Linked: ${summary.tasksLinked} tasks (now in progress)`);
+                    
+                    // Show success message
+                    alert(`Task Conversion Complete! 🎉\n\n✨ Created ${summary.milestonesCreated} milestones\n🔗 Converted ${summary.tasksLinked} tasks to "In Progress"\n📅 All milestones linked to correct weeks\n\nRefreshing dashboard...`);
+                    
+                    // Auto-refresh the dashboard to show updated data
+                    setTimeout(() => {
+                        updateMetrics();
+                    }, 1000);
+                    
+                } else {
+                    addDebugInfo(`❌ Conversion failed: ${result.error}`);
+                    alert(`Conversion failed: ${result.error}`);
+                }
+
+            } catch (error) {
+                console.error('Automation error:', error);
+                addDebugInfo(`❌ Automation error: ${error.message}`);
+                alert(`Automation error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                span.textContent = originalText;
             }
         }
 
