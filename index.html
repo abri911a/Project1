@@ -552,7 +552,7 @@
             const total = focusTasks.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-            // Calculate this week's tasks
+            // Calculate this week's tasks using multiple methods
             const now = new Date();
             const startOfWeek = new Date(now);
             startOfWeek.setDate(now.getDate() - now.getDay());
@@ -562,7 +562,8 @@
             endOfWeek.setDate(startOfWeek.getDate() + 6);
             endOfWeek.setHours(23, 59, 59, 999);
 
-            const thisWeek = focusTasks.filter(task => {
+            // Method 1: By due date
+            const thisWeekByDate = focusTasks.filter(task => {
                 let dueDate = null;
                 
                 if (task.milestoneData && task.milestoneData.properties['Due Date']?.date?.start) {
@@ -575,6 +576,42 @@
                 const taskDate = new Date(dueDate);
                 return taskDate >= startOfWeek && taskDate <= endOfWeek;
             }).length;
+
+            // Method 2: By milestone week (if milestone has current week indicator)
+            const thisWeekByMilestone = focusTasks.filter(task => {
+                if (!task.milestoneData) return false;
+                
+                // Check if milestone has "Is Current Week" formula or similar
+                const isCurrentWeek = task.milestoneData.properties['Is Current Week']?.formula?.boolean;
+                const isCurrentAuto = task.milestoneData.properties['Is Current (Auto)']?.rollup?.array?.[0]?.checkbox;
+                
+                return isCurrentWeek === true || isCurrentAuto === true;
+            }).length;
+
+            // Method 3: Tasks created this week (as a fallback)
+            const thisWeekByCreation = focusTasks.filter(task => {
+                const createdDate = new Date(task.properties.Created);
+                return createdDate >= startOfWeek && createdDate <= endOfWeek;
+            }).length;
+
+            // Use the method that gives the best result
+            let thisWeek = thisWeekByDate;
+            let weekMethod = 'due date';
+
+            if (thisWeekByDate === 0 && thisWeekByMilestone > 0) {
+                thisWeek = thisWeekByMilestone;
+                weekMethod = 'milestone current week';
+            } else if (thisWeekByDate === 0 && thisWeekByMilestone === 0 && thisWeekByCreation > 0) {
+                thisWeek = thisWeekByCreation;
+                weekMethod = 'created this week';
+            }
+
+            if (focusArea === 'Career') { // Debug for first focus area
+                addDebugInfo(`${focusArea} this week: ${thisWeek} (method: ${weekMethod})`);
+                addDebugInfo(`  - By due date: ${thisWeekByDate}`);
+                addDebugInfo(`  - By milestone: ${thisWeekByMilestone}`);
+                addDebugInfo(`  - By creation: ${thisWeekByCreation}`);
+            }
 
             return {
                 total,
@@ -601,7 +638,7 @@
                 const totalCompleted = tasks.filter(t => t.computedStatus === '✅ Completed').length;
                 const overallCompletion = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
                 
-                // Calculate overall this week
+                // Calculate overall this week with detailed debugging
                 const now = new Date();
                 const startOfWeek = new Date(now);
                 startOfWeek.setDate(now.getDate() - now.getDay());
@@ -611,19 +648,70 @@
                 endOfWeek.setDate(startOfWeek.getDate() + 6);
                 endOfWeek.setHours(23, 59, 59, 999);
 
-                const thisWeekTotal = tasks.filter(task => {
+                addDebugInfo(`Week range: ${startOfWeek.toDateString()} to ${endOfWeek.toDateString()}`);
+
+                // Debug: Check all tasks for due dates
+                let tasksWithDates = 0;
+                let tasksWithMilestoneDates = 0;
+                let tasksWithTaskDates = 0;
+
+                const thisWeekTasks = tasks.filter(task => {
                     let dueDate = null;
+                    let dateSource = 'none';
                     
                     if (task.milestoneData && task.milestoneData.properties['Due Date']?.date?.start) {
                         dueDate = task.milestoneData.properties['Due Date'].date.start;
+                        dateSource = 'milestone';
+                        tasksWithMilestoneDates++;
                     } else if (task.properties['Due Date']?.date?.start) {
                         dueDate = task.properties['Due Date'].date.start;
+                        dateSource = 'task';
+                        tasksWithTaskDates++;
                     }
                     
-                    if (!dueDate) return false;
-                    const taskDate = new Date(dueDate);
-                    return taskDate >= startOfWeek && taskDate <= endOfWeek;
-                }).length;
+                    if (dueDate) {
+                        tasksWithDates++;
+                        const taskDate = new Date(dueDate);
+                        const isThisWeek = taskDate >= startOfWeek && taskDate <= endOfWeek;
+                        
+                        if (isThisWeek) {
+                            addDebugInfo(`This week task: "${task.properties.Task}" (${dateSource} date: ${taskDate.toDateString()})`);
+                        }
+                        
+                        return isThisWeek;
+                    }
+                    
+                    return false;
+                });
+
+                const thisWeekTotal = thisWeekTasks.length;
+                
+                addDebugInfo(`Date analysis: ${tasksWithDates} tasks have dates (${tasksWithMilestoneDates} milestone, ${tasksWithTaskDates} task)`);
+                addDebugInfo(`This week total: ${thisWeekTotal} tasks due this week`);
+
+                // If no tasks this week, let's check what dates we do have
+                if (thisWeekTotal === 0) {
+                    const allDates = tasks.map(task => {
+                        let dueDate = null;
+                        let source = 'none';
+                        
+                        if (task.milestoneData && task.milestoneData.properties['Due Date']?.date?.start) {
+                            dueDate = task.milestoneData.properties['Due Date'].date.start;
+                            source = 'milestone';
+                        } else if (task.properties['Due Date']?.date?.start) {
+                            dueDate = task.properties['Due Date'].date.start;
+                            source = 'task';
+                        }
+                        
+                        return {
+                            task: task.properties.Task,
+                            date: dueDate,
+                            source: source
+                        };
+                    }).filter(item => item.date);
+
+                    addDebugInfo(`Sample dates found: ${allDates.slice(0, 3).map(item => `${item.task}: ${item.date} (${item.source})`).join(', ')}`);
+                }
 
                 // Update overall stats
                 document.getElementById('totalTasks').textContent = totalTasks;
