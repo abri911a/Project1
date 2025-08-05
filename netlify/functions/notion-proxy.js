@@ -26,18 +26,18 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { token, databaseId } = JSON.parse(event.body);
+    const { token, tasksDbId, milestonesDbId } = JSON.parse(event.body);
 
-    if (!token || !databaseId) {
+    if (!token || !tasksDbId || !milestonesDbId) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing token or databaseId' })
+        body: JSON.stringify({ error: 'Missing token, tasksDbId, or milestonesDbId' })
       };
     }
 
-    // Make request to Notion API
-    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    // Fetch Tasks Bank database
+    const tasksResponse = await fetch(`https://api.notion.com/v1/databases/${tasksDbId}/query`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -49,24 +49,94 @@ exports.handler = async (event, context) => {
       })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!tasksResponse.ok) {
+      const errorText = await tasksResponse.text();
       return {
-        statusCode: response.status,
+        statusCode: tasksResponse.status,
         headers,
         body: JSON.stringify({ 
-          error: `Notion API error: ${response.status}`,
+          error: `Tasks API error: ${tasksResponse.status}`,
           details: errorText
         })
       };
     }
 
-    const data = await response.json();
-    
+    // Fetch Weekly Milestones database
+    const milestonesResponse = await fetch(`https://api.notion.com/v1/databases/${milestonesDbId}/query`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        page_size: 100
+      })
+    });
+
+    if (!milestonesResponse.ok) {
+      const errorText = await milestonesResponse.text();
+      return {
+        statusCode: milestonesResponse.status,
+        headers,
+        body: JSON.stringify({ 
+          error: `Milestones API error: ${milestonesResponse.status}`,
+          details: errorText
+        })
+      };
+    }
+
+    const tasksData = await tasksResponse.json();
+    const milestonesData = await milestonesResponse.json();
+
+    // Create a map of milestone URLs to milestone data for quick lookup
+    const milestonesMap = {};
+    milestonesData.results.forEach(milestone => {
+      milestonesMap[milestone.url] = milestone;
+    });
+
+    // Enrich tasks with milestone completion status
+    const enrichedTasks = tasksData.results.map(task => {
+      // Get linked milestones
+      const linkedMilestones = task.properties['Linked to Weekly Milestone']?.relation || [];
+      
+      // Find completion status from linked milestones
+      let isCompleted = false;
+      let isInProgress = false;
+      let milestoneData = null;
+
+      if (linkedMilestones.length > 0) {
+        // Get the first linked milestone (assuming one-to-one relationship)
+        const milestoneUrl = linkedMilestones[0].id;
+        milestoneData = Object.values(milestonesMap).find(m => m.id === milestoneUrl);
+        
+        if (milestoneData) {
+          isCompleted = milestoneData.properties.Completed?.checkbox === true;
+          // You can define "in progress" logic based on your workflow
+          // For now, let's say in progress = has milestone but not completed
+          isInProgress = !isCompleted;
+        }
+      }
+
+      return {
+        ...task,
+        // Add computed status based on milestone
+        computedStatus: isCompleted ? '✅ Completed' : 
+                       isInProgress ? '🚀 In Progress' : 
+                       task.properties.Status?.select?.name || '📝 Draft',
+        milestoneData: milestoneData
+      };
+    });
+
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(data)
+      body: JSON.stringify({
+        tasks: enrichedTasks,
+        milestones: milestonesData.results,
+        totalTasks: enrichedTasks.length,
+        tasksWithMilestones: enrichedTasks.filter(t => t.milestoneData).length
+      })
     };
 
   } catch (error) {
