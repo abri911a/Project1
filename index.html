@@ -545,15 +545,43 @@
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                addDebugInfo(`Proxy Error: ${response.status} - ${errorData.error}`);
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                addDebugInfo(`Proxy Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
                 throw new Error(`Proxy Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
             }
 
             const data = await response.json();
-            addDebugInfo(`Received ${data.totalTasks} tasks, ${data.tasksWithMilestones} with milestones`);
             
-            return data;
+            // Debug the received data structure
+            addDebugInfo(`Raw response keys: ${Object.keys(data).join(', ')}`);
+            
+            // Handle different possible response structures
+            let tasks = [];
+            let tasksWithMilestones = 0;
+            
+            if (data.results) {
+                tasks = data.results;
+                tasksWithMilestones = data.tasksWithMilestones || 0;
+                addDebugInfo(`Using 'results' structure: ${tasks.length} tasks, ${tasksWithMilestones} with milestones`);
+            } else if (data.tasks) {
+                tasks = data.tasks;
+                tasksWithMilestones = data.tasksWithMilestones || 0;
+                addDebugInfo(`Using 'tasks' structure: ${tasks.length} tasks, ${tasksWithMilestones} with milestones`);
+            } else {
+                addDebugInfo(`Unexpected data structure. Available keys: ${Object.keys(data).join(', ')}`);
+                throw new Error('Unexpected response structure from proxy');
+            }
+            
+            if (!Array.isArray(tasks)) {
+                addDebugInfo(`Tasks is not an array: ${typeof tasks}`);
+                throw new Error('Tasks data is not in expected array format');
+            }
+            
+            return {
+                tasks: tasks,
+                totalTasks: tasks.length,
+                tasksWithMilestones: tasksWithMilestones
+            };
         }
 
         function calculateFocusAreaMetrics(tasks, focusArea) {
