@@ -735,7 +735,7 @@
         const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
         
         // 12 Week Year Start Date - Update this to your actual start date
-        const TWELVE_WEEK_START = new Date('2025-08-04'); // August 4, 2025
+        const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
         
         let isLoading = false;
         let debugData = [];
@@ -776,11 +776,20 @@
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
             
+            // Calculate actual progress through 12 weeks
+            const daysCompleted = Math.min(daysSinceStart, 84); // 84 days = 12 weeks
+            const actualProgress = ((daysCompleted / 84) * 100).toFixed(1);
+            
+            addDebugInfo(`Current date: ${now.toDateString()}`);
+            addDebugInfo(`Days since start: ${daysSinceStart}`);
+            addDebugInfo(`Current week: ${weekNumber}`);
+            addDebugInfo(`Week dates: ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
+            
             return {
                 number: weekNumber,
                 start: weekStart,
                 end: weekEnd,
-                progress: ((weekNumber - 1) / 12 * 100).toFixed(1)
+                progress: actualProgress
             };
         }
 
@@ -929,9 +938,21 @@
                 const completedMilestones = allMilestones.filter(m => m.completed).length;
                 const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
-                const thisWeekMilestones = allMilestones.filter(m => 
-                    m.weekNumber === currentWeek.number || m.isCurrent
-                ).length;
+                const thisWeekMilestones = allMilestones.filter(m => {
+                    // Method 1: Check week number
+                    if (m.weekNumber === currentWeek.number) return true;
+                    
+                    // Method 2: Check if marked as current
+                    if (m.isCurrent) return true;
+                    
+                    // Method 3: Check by due date
+                    if (m.dueDate) {
+                        const dueDate = new Date(m.dueDate);
+                        return dueDate >= currentWeek.start && dueDate <= currentWeek.end;
+                    }
+                    
+                    return false;
+                }).length;
                 
                 // Update overall stats
                 document.getElementById('totalMilestones').textContent = totalMilestones;
