@@ -98,6 +98,22 @@
             transform: translateY(-1px);
         }
 
+        .automation-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169) !important;
+            border: none;
+            font-weight: 600;
+        }
+
+        .automation-btn:hover {
+            background: linear-gradient(135deg, #38a169, #2f855a) !important;
+        }
+
+        .automation-btn:disabled {
+            background: rgba(255,255,255,0.1) !important;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .api-status {
             padding: 4px 12px;
             border-radius: 12px;
@@ -497,6 +513,9 @@
                 </div>
                 <span id="apiStatus" class="api-status status-loading">Connecting...</span>
                 <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
+                <button class="refresh-btn automation-btn" id="automationBtn" onclick="runAutomation()">
+                    <span>📅➡️📝 Convert Planned Tasks</span>
+                </button>
                 <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
                     <span>🔄 Refresh</span>
                 </button>
@@ -712,6 +731,7 @@
         // Configuration - Replace with your actual token
         const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP';
         const PROXY_URL = '/.netlify/functions/notion-proxy';
+        const AUTOMATION_URL = '/.netlify/functions/task-automation';
         const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
         
         // 12 Week Year Start Date - Update this to your actual start date
@@ -1003,6 +1023,82 @@
                 span.style.transform = 'rotate(0deg)';
                 btn.disabled = false;
             }, 800);
+        }
+
+        async function runAutomation() {
+            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
+                addDebugInfo('Error: Please configure your Notion integration token');
+                alert('Please configure your Notion integration token first');
+                return;
+            }
+
+            const btn = document.getElementById('automationBtn');
+            const span = btn.querySelector('span');
+            const originalText = span.textContent;
+            
+            btn.disabled = true;
+            span.textContent = '⏳ Converting Tasks...';
+            
+            addDebugInfo('Starting task automation...');
+            addDebugInfo('Converting planned tasks to milestones...');
+
+            try {
+                const response = await fetch(AUTOMATION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: NOTION_TOKEN
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(`Automation failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const { summary } = result;
+                    addDebugInfo(`✅ Automation completed successfully!`);
+                    addDebugInfo(`📊 Summary: ${summary.tasksProcessed} planned tasks processed`);
+                    addDebugInfo(`✨ Created: ${summary.milestonesCreated} milestones`);
+                    addDebugInfo(`🔗 Linked: ${summary.tasksLinked} tasks (now in progress)`);
+                    
+                    let message = `Task Conversion Complete! 🎉\n\n`;
+                    message += `📊 Processed: ${summary.tasksProcessed} planned tasks\n`;
+                    message += `✨ Created: ${summary.milestonesCreated} milestones\n`;
+                    message += `🔗 Updated: ${summary.tasksLinked} tasks to "In Progress"\n`;
+                    
+                    if (summary.errors > 0) {
+                        message += `⚠️ Errors: ${summary.errors} tasks had issues\n`;
+                        addDebugInfo(`⚠️ ${summary.errors} errors occurred during processing`);
+                    }
+                    
+                    message += `\nRefreshing dashboard...`;
+                    
+                    alert(message);
+                    
+                    // Auto-refresh the dashboard to show updated data
+                    setTimeout(() => {
+                        updateMetrics();
+                    }, 1000);
+                    
+                } else {
+                    addDebugInfo(`❌ Automation failed: ${result.error}`);
+                    alert(`Automation failed: ${result.message || result.error}`);
+                }
+
+            } catch (error) {
+                console.error('Automation error:', error);
+                addDebugInfo(`❌ Automation error: ${error.message}`);
+                alert(`Automation error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                span.textContent = originalText;
+            }
         }
 
         // Initial load
