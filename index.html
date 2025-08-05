@@ -3,48 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Metrics Widget - Milestone Based</title>
+    <title>Focus Area Dashboard</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segui UI', Roboto, sans-serif;
             margin: 0;
-            padding: 15px;
-            background: transparent;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             font-size: 14px;
         }
 
-        .widget {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            max-width: 600px;
+        .dashboard {
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
         }
 
-        .header h2 {
-            margin: 0;
-            color: #1a202c;
-            font-size: 1.2rem;
-            font-weight: 600;
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .live-indicator {
             display: flex;
             align-items: center;
             gap: 8px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
 
         .live-dot {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             background: #48bb78;
             border-radius: 50%;
             animation: pulse 2s infinite;
@@ -56,219 +64,419 @@
         }
 
         .refresh-btn {
-            background: #667eea;
+            background: rgba(255,255,255,0.2);
             color: white;
-            border: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .debug-toggle {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
             border-radius: 6px;
             padding: 6px 12px;
-            font-size: 11px;
+            font-size: 0.8rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
 
-        .refresh-btn:hover { background: #5a67d8; }
-        .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .metric {
-            text-align: center;
-            padding: 20px 15px;
-            background: white;
+        .api-status {
+            padding: 4px 12px;
             border-radius: 12px;
-            border: 1px solid #f1f5f9;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            font-size: 0.8rem;
+            font-weight: 500;
         }
 
-        .metric::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+        .status-success { background: #48bb78; color: white; }
+        .status-error { background: #f56565; color: white; }
+        .status-loading { background: #4299e1; color: white; }
+
+        /* Overall Stats Bar */
+        .overall-stats {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
-        .metric:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        .overall-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
         }
 
-        .metric-value {
+        .overall-metric {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f7);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .overall-value {
             font-size: 2rem;
             font-weight: 700;
             color: #2d3748;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            margin-bottom: 5px;
         }
 
-        .metric-label {
-            font-size: 0.75rem;
+        .overall-label {
+            font-size: 0.8rem;
             color: #4a5568;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-weight: 500;
         }
 
-        .metric-icon {
-            font-size: 1.2rem;
-            opacity: 0.8;
+        /* Focus Area Cards */
+        .focus-areas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
         }
 
-        .loading { color: #a0aec0; font-size: 1rem; }
+        .focus-area-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .focus-area-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .focus-area-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .career::before { background: linear-gradient(90deg, #4299e1, #3182ce); }
+        .business::before { background: linear-gradient(90deg, #48bb78, #38a169); }
+        .health::before { background: linear-gradient(90deg, #f56565, #e53e3e); }
+        .personal::before { background: linear-gradient(90deg, #9f7aea, #805ad5); }
+
+        .focus-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .focus-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .focus-icon {
+            font-size: 1.5rem;
+        }
+
+        .focus-completion {
+            background: #f7fafc;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .career .focus-completion { color: #3182ce; background: #ebf8ff; }
+        .business .focus-completion { color: #38a169; background: #f0fff4; }
+        .health .focus-completion { color: #e53e3e; background: #fed7d7; }
+        .personal .focus-completion { color: #805ad5; background: #faf5ff; }
+
+        .focus-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .focus-metric {
+            text-align: center;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .focus-metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .focus-metric-label {
+            font-size: 0.7rem;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .career .progress-fill { background: linear-gradient(90deg, #4299e1, #3182ce); }
+        .business .progress-fill { background: linear-gradient(90deg, #48bb78, #38a169); }
+        .health .progress-fill { background: linear-gradient(90deg, #f56565, #e53e3e); }
+        .personal .progress-fill { background: linear-gradient(90deg, #9f7aea, #805ad5); }
+
+        .loading { color: #a0aec0; font-size: 0.9rem; }
         .error { color: #e53e3e; font-size: 0.9rem; }
 
         .update-time {
             text-align: center;
-            font-size: 0.7rem;
-            color: #718096;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.8rem;
             margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #f1f5f9;
-        }
-
-        .api-status {
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 6px;
-            margin-left: 8px;
-            font-weight: 500;
-        }
-
-        .status-success { 
-            background: #c6f6d5; 
-            color: #276749; 
-        }
-        
-        .status-error { 
-            background: #fed7d7; 
-            color: #c53030; 
-        }
-        
-        .status-loading { 
-            background: #bee3f8; 
-            color: #2a69ac; 
         }
 
         .debug-info {
-            background: #f7fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
             font-size: 0.7rem;
             color: #4a5568;
-            max-height: 150px;
+            max-height: 200px;
             overflow-y: auto;
+            display: none;
         }
 
-        .debug-toggle {
-            background: #e2e8f0;
-            border: none;
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            margin-left: 10px;
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+            font-style: italic;
         }
-
-        .metric-trend {
-            font-size: 0.7rem;
-            margin-top: 5px;
-            font-weight: 500;
-            opacity: 0.8;
-        }
-
-        .trend-up { color: #48bb78; }
-        .trend-down { color: #f56565; }
-        .trend-neutral { color: #a0aec0; }
     </style>
 </head>
 <body>
-    <div class="widget">
+    <div class="dashboard">
         <div class="header">
-            <h2>
-                <div class="live-dot"></div>
-                Live Metrics
+            <h1>📊 Focus Area Dashboard</h1>
+            <div class="header-controls">
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    <span>Live Metrics</span>
+                </div>
                 <span id="apiStatus" class="api-status status-loading">Connecting...</span>
-            </h2>
-            <div>
                 <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
-                <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">↻</button>
+                <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
+                    <span>🔄 Refresh</span>
+                </button>
             </div>
         </div>
 
-        <div class="metrics">
-            <div class="metric">
-                <div class="metric-value" id="totalTasks">
-                    <span class="metric-icon">📊</span>
-                    <span class="loading">...</span>
+        <!-- Overall Stats -->
+        <div class="overall-stats">
+            <div class="overall-grid">
+                <div class="overall-metric">
+                    <div class="overall-value" id="totalTasks">
+                        <span class="loading">...</span>
+                    </div>
+                    <div class="overall-label">Total API Q1 Tasks</div>
                 </div>
-                <div class="metric-label">API Q1 Tasks</div>
-                <div class="metric-trend" id="totalTrend"></div>
+                <div class="overall-metric">
+                    <div class="overall-value" id="totalCompleted">
+                        <span class="loading">...</span>
+                    </div>
+                    <div class="overall-label">Total Completed</div>
+                </div>
+                <div class="overall-metric">
+                    <div class="overall-value" id="overallCompletion">
+                        <span class="loading">...</span>
+                    </div>
+                    <div class="overall-label">Overall Completion</div>
+                </div>
+                <div class="overall-metric">
+                    <div class="overall-value" id="thisWeekTotal">
+                        <span class="loading">...</span>
+                    </div>
+                    <div class="overall-label">This Week Total</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Focus Area Cards -->
+        <div class="focus-areas">
+            <div class="focus-area-card career">
+                <div class="focus-header">
+                    <div class="focus-title">
+                        <span class="focus-icon">💼</span>
+                        <span>Career</span>
+                    </div>
+                    <div class="focus-completion" id="careerCompletion">0%</div>
+                </div>
+                <div class="focus-metrics">
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="careerTotal">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">Total</div>
+                    </div>
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="careerCompleted">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">Completed</div>
+                    </div>
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="careerThisWeek">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">This Week</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="careerProgress" style="width: 0%"></div>
+                </div>
             </div>
 
-            <div class="metric">
-                <div class="metric-value" id="highPriority">
-                    <span class="metric-icon">🔥</span>
-                    <span class="loading">...</span>
+            <div class="focus-area-card business">
+                <div class="focus-header">
+                    <div class="focus-title">
+                        <span class="focus-icon">🏢</span>
+                        <span>Business</span>
+                    </div>
+                    <div class="focus-completion" id="businessCompletion">0%</div>
                 </div>
-                <div class="metric-label">High Priority</div>
-                <div class="metric-trend" id="priorityTrend"></div>
+                <div class="focus-metrics">
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="businessTotal">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">Total</div>
+                    </div>
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="businessCompleted">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">Completed</div>
+                    </div>
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="businessThisWeek">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">This Week</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="businessProgress" style="width: 0%"></div>
+                </div>
             </div>
 
-            <div class="metric">
-                <div class="metric-value" id="thisWeek">
-                    <span class="metric-icon">📅</span>
-                    <span class="loading">...</span>
+            <div class="focus-area-card health">
+                <div class="focus-header">
+                    <div class="focus-title">
+                        <span class="focus-icon">🏥</span>
+                        <span>Health</span>
+                    </div>
+                    <div class="focus-completion" id="healthCompletion">0%</div>
                 </div>
-                <div class="metric-label">This Week</div>
-                <div class="metric-trend" id="weekTrend"></div>
+                <div class="focus-metrics">
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="healthTotal">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">Total</div>
+                    </div>
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="healthCompleted">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">Completed</div>
+                    </div>
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="healthThisWeek">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">This Week</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="healthProgress" style="width: 0%"></div>
+                </div>
             </div>
 
-            <div class="metric">
-                <div class="metric-value" id="completed">
-                    <span class="metric-icon">✅</span>
-                    <span class="loading">...</span>
+            <div class="focus-area-card personal">
+                <div class="focus-header">
+                    <div class="focus-title">
+                        <span class="focus-icon">🏠</span>
+                        <span>Personal</span>
+                    </div>
+                    <div class="focus-completion" id="personalCompletion">0%</div>
                 </div>
-                <div class="metric-label">Completed</div>
-                <div class="metric-trend" id="completedTrend"></div>
-            </div>
-
-            <div class="metric">
-                <div class="metric-value" id="inProgress">
-                    <span class="metric-icon">🚀</span>
-                    <span class="loading">...</span>
+                <div class="focus-metrics">
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="personalTotal">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">Total</div>
+                    </div>
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="personalCompleted">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">Completed</div>
+                    </div>
+                    <div class="focus-metric">
+                        <div class="focus-metric-value" id="personalThisWeek">
+                            <span class="loading">...</span>
+                        </div>
+                        <div class="focus-metric-label">This Week</div>
+                    </div>
                 </div>
-                <div class="metric-label">In Progress</div>
-                <div class="metric-trend" id="progressTrend"></div>
-            </div>
-
-            <div class="metric">
-                <div class="metric-value" id="completion">
-                    <span class="metric-icon">📈</span>
-                    <span class="loading">...</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="personalProgress" style="width: 0%"></div>
                 </div>
-                <div class="metric-label">Completion Rate</div>
-                <div class="metric-trend" id="rateTrend"></div>
             </div>
         </div>
 
         <div class="update-time">
-            🔄 Auto-updated from Tasks Bank + Weekly Milestones • Last updated: <span id="lastUpdate">Never</span>
+            🔄 Auto-updated every 2 minutes • Last updated: <span id="lastUpdate">Never</span>
         </div>
 
-        <div class="debug-info" id="debugInfo" style="display: none;">
+        <div class="debug-info" id="debugInfo">
             <div id="debugContent">No debug data yet...</div>
         </div>
     </div>
@@ -281,12 +489,11 @@
         const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
 
         let isLoading = false;
-        let previousMetrics = {};
         let debugData = [];
 
         function addDebugInfo(message) {
             debugData.push(`${new Date().toLocaleTimeString()}: ${message}`);
-            if (debugData.length > 30) debugData.shift();
+            if (debugData.length > 50) debugData.shift();
             
             const debugContent = document.getElementById('debugContent');
             debugContent.innerHTML = debugData.join('<br>');
@@ -298,7 +505,7 @@
             
             if (debugInfo.style.display === 'none') {
                 debugInfo.style.display = 'block';
-                toggleBtn.textContent = 'Hide';
+                toggleBtn.textContent = 'Hide Debug';
             } else {
                 debugInfo.style.display = 'none';
                 toggleBtn.textContent = 'Debug';
@@ -336,6 +543,48 @@
             return data;
         }
 
+        function calculateFocusAreaMetrics(tasks, focusArea) {
+            const focusTasks = tasks.filter(task => 
+                task.properties['Focus Area']?.select?.name === focusArea
+            );
+
+            const completed = focusTasks.filter(t => t.computedStatus === '✅ Completed').length;
+            const total = focusTasks.length;
+            const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            // Calculate this week's tasks
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            endOfWeek.setHours(23, 59, 59, 999);
+
+            const thisWeek = focusTasks.filter(task => {
+                let dueDate = null;
+                
+                if (task.milestoneData && task.milestoneData.properties['Due Date']?.date?.start) {
+                    dueDate = task.milestoneData.properties['Due Date'].date.start;
+                } else if (task.properties['Due Date']?.date?.start) {
+                    dueDate = task.properties['Due Date'].date.start;
+                }
+                
+                if (!dueDate) return false;
+                const taskDate = new Date(dueDate);
+                return taskDate >= startOfWeek && taskDate <= endOfWeek;
+            }).length;
+
+            return {
+                total,
+                completed,
+                completionRate,
+                thisWeek,
+                tasks: focusTasks
+            };
+        }
+
         async function updateMetrics() {
             if (isLoading) return;
             isLoading = true;
@@ -347,23 +596,12 @@
                 const data = await fetchTasksWithMilestones();
                 const tasks = data.tasks;
                 
-                // Calculate metrics using milestone completion status
+                // Calculate overall metrics
                 const totalTasks = tasks.length;
-                const highPriority = tasks.filter(t => t.properties.Priority?.select?.name === '🔥 High').length;
+                const totalCompleted = tasks.filter(t => t.computedStatus === '✅ Completed').length;
+                const overallCompletion = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
                 
-                // Use milestone completion status
-                const completed = tasks.filter(t => t.computedStatus === '✅ Completed').length;
-                const inProgress = tasks.filter(t => t.computedStatus === '🚀 In Progress').length;
-                
-                addDebugInfo(`Computed statuses: ${completed} completed, ${inProgress} in progress`);
-                
-                // Debug: Show some task completion info
-                const completedTasks = tasks.filter(t => t.computedStatus === '✅ Completed');
-                if (completedTasks.length > 0) {
-                    addDebugInfo(`Completed tasks: ${completedTasks.map(t => t.properties.Task).slice(0, 3).join(', ')}${completedTasks.length > 3 ? '...' : ''}`);
-                }
-                
-                // Calculate this week's tasks based on milestone due dates
+                // Calculate overall this week
                 const now = new Date();
                 const startOfWeek = new Date(now);
                 startOfWeek.setDate(now.getDate() - now.getDay());
@@ -372,9 +610,8 @@
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setDate(startOfWeek.getDate() + 6);
                 endOfWeek.setHours(23, 59, 59, 999);
-                
-                const thisWeekTasks = tasks.filter(task => {
-                    // Check milestone due date first, then fall back to task due date
+
+                const thisWeekTotal = tasks.filter(task => {
                     let dueDate = null;
                     
                     if (task.milestoneData && task.milestoneData.properties['Due Date']?.date?.start) {
@@ -386,82 +623,57 @@
                     if (!dueDate) return false;
                     const taskDate = new Date(dueDate);
                     return taskDate >= startOfWeek && taskDate <= endOfWeek;
+                }).length;
+
+                // Update overall stats
+                document.getElementById('totalTasks').textContent = totalTasks;
+                document.getElementById('totalCompleted').textContent = totalCompleted;
+                document.getElementById('overallCompletion').textContent = overallCompletion + '%';
+                document.getElementById('thisWeekTotal').textContent = thisWeekTotal;
+
+                // Calculate and update focus area metrics
+                const focusAreas = ['Career', 'Business', 'Health', 'Personal'];
+                
+                focusAreas.forEach(focusArea => {
+                    const metrics = calculateFocusAreaMetrics(tasks, focusArea);
+                    const prefix = focusArea.toLowerCase();
+                    
+                    addDebugInfo(`${focusArea}: ${metrics.total} total, ${metrics.completed} completed (${metrics.completionRate}%)`);
+                    
+                    // Update display
+                    document.getElementById(`${prefix}Total`).textContent = metrics.total;
+                    document.getElementById(`${prefix}Completed`).textContent = metrics.completed;
+                    document.getElementById(`${prefix}ThisWeek`).textContent = metrics.thisWeek;
+                    document.getElementById(`${prefix}Completion`).textContent = metrics.completionRate + '%';
+                    
+                    // Update progress bar
+                    document.getElementById(`${prefix}Progress`).style.width = metrics.completionRate + '%';
                 });
-                
-                const thisWeek = thisWeekTasks.length;
-                addDebugInfo(`This week: ${thisWeek} tasks due`);
 
-                const completionRate = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0;
-
-                // Update display
-                updateMetricDisplay('totalTasks', totalTasks);
-                updateMetricDisplay('highPriority', highPriority);
-                updateMetricDisplay('thisWeek', thisWeek);
-                updateMetricDisplay('completed', completed);
-                updateMetricDisplay('inProgress', inProgress);
-                updateMetricDisplay('completion', completionRate + '%');
-
-                // Update trends
-                updateTrend('totalTrend', totalTasks, previousMetrics.totalTasks);
-                updateTrend('priorityTrend', highPriority, previousMetrics.highPriority);
-                updateTrend('weekTrend', thisWeek, previousMetrics.thisWeek);
-                updateTrend('completedTrend', completed, previousMetrics.completed);
-                updateTrend('progressTrend', inProgress, previousMetrics.inProgress);
-                updateTrend('rateTrend', completionRate, previousMetrics.completionRate);
-
-                // Store for next comparison
-                previousMetrics = {
-                    totalTasks,
-                    highPriority,
-                    thisWeek,
-                    completed,
-                    inProgress,
-                    completionRate
-                };
-                
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 updateApiStatus('success');
-                addDebugInfo('Metrics updated successfully!');
+                addDebugInfo('All metrics updated successfully!');
 
             } catch (error) {
                 console.error('Error fetching data:', error);
                 addDebugInfo(`Error: ${error.message}`);
                 
-                ['totalTasks', 'highPriority', 'thisWeek', 'completed', 'inProgress', 'completion'].forEach(id => {
-                    const element = document.getElementById(id);
-                    const icon = element.querySelector('.metric-icon');
-                    element.innerHTML = icon.outerHTML + '<span class="error">Error</span>';
+                // Show error in all fields
+                const errorElements = [
+                    'totalTasks', 'totalCompleted', 'overallCompletion', 'thisWeekTotal',
+                    'careerTotal', 'careerCompleted', 'careerThisWeek',
+                    'businessTotal', 'businessCompleted', 'businessThisWeek',
+                    'healthTotal', 'healthCompleted', 'healthThisWeek',
+                    'personalTotal', 'personalCompleted', 'personalThisWeek'
+                ];
+                
+                errorElements.forEach(id => {
+                    document.getElementById(id).innerHTML = '<span class="error">Error</span>';
                 });
                 
                 updateApiStatus('error');
             } finally {
                 isLoading = false;
-            }
-        }
-
-        function updateMetricDisplay(elementId, value) {
-            const element = document.getElementById(elementId);
-            const icon = element.querySelector('.metric-icon');
-            element.innerHTML = icon.outerHTML + `<span>${value}</span>`;
-        }
-
-        function updateTrend(trendId, currentValue, previousValue) {
-            const trendEl = document.getElementById(trendId);
-            if (previousValue === undefined) {
-                trendEl.textContent = '';
-                return;
-            }
-
-            const diff = currentValue - previousValue;
-            if (diff > 0) {
-                trendEl.textContent = `↗ +${diff}`;
-                trendEl.className = 'metric-trend trend-up';
-            } else if (diff < 0) {
-                trendEl.textContent = `↘ ${diff}`;
-                trendEl.className = 'metric-trend trend-down';
-            } else {
-                trendEl.textContent = '→ No change';
-                trendEl.className = 'metric-trend trend-neutral';
             }
         }
 
@@ -485,24 +697,37 @@
 
         async function refreshData() {
             const btn = document.getElementById('refreshBtn');
-            btn.style.transform = 'rotate(360deg)';
-            btn.style.transition = 'transform 0.6s ease';
+            const span = btn.querySelector('span');
+            
+            span.style.transform = 'rotate(360deg)';
+            span.style.transition = 'transform 0.8s ease';
             btn.disabled = true;
             
             await updateMetrics();
             
             setTimeout(() => {
-                btn.style.transform = 'rotate(0deg)';
+                span.style.transform = 'rotate(0deg)';
                 btn.disabled = false;
-            }, 600);
+            }, 800);
         }
 
         // Initial load
-        addDebugInfo('Widget initialized with milestone support');
+        addDebugInfo('Focus Area Dashboard initialized');
         updateMetrics();
 
         // Auto-refresh every 2 minutes
         setInterval(updateMetrics, 120000);
+
+        // Add hover effects
+        document.querySelectorAll('.focus-area-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
     </script>
 </body>
 </html>
