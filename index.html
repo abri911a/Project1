@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Metrics Widget - Debug Version</title>
+    <title>Live Metrics Widget - Milestone Based</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segui UI', Roboto, sans-serif;
             margin: 0;
             padding: 15px;
             background: transparent;
@@ -72,28 +72,44 @@
         .metrics {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
+            gap: 15px;
         }
 
         .metric {
             text-align: center;
-            padding: 15px 12px;
+            padding: 20px 15px;
             background: white;
-            border-radius: 8px;
+            border-radius: 12px;
             border: 1px solid #f1f5f9;
-            transition: transform 0.2s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
         }
 
         .metric:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .metric-value {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 700;
             color: #2d3748;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .metric-label {
@@ -104,6 +120,11 @@
             font-weight: 500;
         }
 
+        .metric-icon {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
         .loading { color: #a0aec0; font-size: 1rem; }
         .error { color: #e53e3e; font-size: 0.9rem; }
 
@@ -111,21 +132,33 @@
             text-align: center;
             font-size: 0.7rem;
             color: #718096;
-            margin-top: 15px;
+            margin-top: 20px;
             padding-top: 15px;
             border-top: 1px solid #f1f5f9;
         }
 
         .api-status {
             font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
             margin-left: 8px;
+            font-weight: 500;
         }
 
-        .status-success { background: #c6f6d5; color: #276749; }
-        .status-error { background: #fed7d7; color: #c53030; }
-        .status-loading { background: #bee3f8; color: #2a69ac; }
+        .status-success { 
+            background: #c6f6d5; 
+            color: #276749; 
+        }
+        
+        .status-error { 
+            background: #fed7d7; 
+            color: #c53030; 
+        }
+        
+        .status-loading { 
+            background: #bee3f8; 
+            color: #2a69ac; 
+        }
 
         .debug-info {
             background: #f7fafc;
@@ -146,8 +179,19 @@
             padding: 4px 8px;
             font-size: 0.7rem;
             cursor: pointer;
-            margin-top: 10px;
+            margin-left: 10px;
         }
+
+        .metric-trend {
+            font-size: 0.7rem;
+            margin-top: 5px;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .trend-up { color: #48bb78; }
+        .trend-down { color: #f56565; }
+        .trend-neutral { color: #a0aec0; }
     </style>
 </head>
 <body>
@@ -156,58 +200,72 @@
             <h2>
                 <div class="live-dot"></div>
                 Live Metrics
-                <span id="apiStatus" class="api-status"></span>
+                <span id="apiStatus" class="api-status status-loading">Connecting...</span>
             </h2>
-            <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">↻</button>
+            <div>
+                <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
+                <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">↻</button>
+            </div>
         </div>
 
         <div class="metrics">
             <div class="metric">
                 <div class="metric-value" id="totalTasks">
+                    <span class="metric-icon">📊</span>
                     <span class="loading">...</span>
                 </div>
-                <div class="metric-label">Total Tasks</div>
+                <div class="metric-label">API Q1 Tasks</div>
+                <div class="metric-trend" id="totalTrend"></div>
             </div>
 
             <div class="metric">
                 <div class="metric-value" id="highPriority">
+                    <span class="metric-icon">🔥</span>
                     <span class="loading">...</span>
                 </div>
                 <div class="metric-label">High Priority</div>
+                <div class="metric-trend" id="priorityTrend"></div>
             </div>
 
             <div class="metric">
                 <div class="metric-value" id="thisWeek">
+                    <span class="metric-icon">📅</span>
                     <span class="loading">...</span>
                 </div>
                 <div class="metric-label">This Week</div>
+                <div class="metric-trend" id="weekTrend"></div>
             </div>
 
             <div class="metric">
                 <div class="metric-value" id="completed">
+                    <span class="metric-icon">✅</span>
                     <span class="loading">...</span>
                 </div>
                 <div class="metric-label">Completed</div>
+                <div class="metric-trend" id="completedTrend"></div>
             </div>
 
             <div class="metric">
                 <div class="metric-value" id="inProgress">
+                    <span class="metric-icon">🚀</span>
                     <span class="loading">...</span>
                 </div>
                 <div class="metric-label">In Progress</div>
+                <div class="metric-trend" id="progressTrend"></div>
             </div>
 
             <div class="metric">
                 <div class="metric-value" id="completion">
+                    <span class="metric-icon">📈</span>
                     <span class="loading">...</span>
                 </div>
-                <div class="metric-label">Completion %</div>
+                <div class="metric-label">Completion Rate</div>
+                <div class="metric-trend" id="rateTrend"></div>
             </div>
         </div>
 
         <div class="update-time">
-            Last updated: <span id="lastUpdate">Never</span>
-            <button class="debug-toggle" onclick="toggleDebug()">Show Debug Info</button>
+            🔄 Auto-updated from Tasks Bank + Weekly Milestones • Last updated: <span id="lastUpdate">Never</span>
         </div>
 
         <div class="debug-info" id="debugInfo" style="display: none;">
@@ -220,13 +278,15 @@
         const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP';
         const PROXY_URL = '/.netlify/functions/notion-proxy';
         const TASKS_DB_ID = 'e1cdae69-6ef0-442f-9777-01c2d7473b66';
+        const MILESTONES_DB_ID = 'e386a85b-cfd6-47a5-bdcf-2d2d677b1f11';
 
         let isLoading = false;
+        let previousMetrics = {};
         let debugData = [];
 
         function addDebugInfo(message) {
             debugData.push(`${new Date().toLocaleTimeString()}: ${message}`);
-            if (debugData.length > 20) debugData.shift(); // Keep only last 20 entries
+            if (debugData.length > 30) debugData.shift();
             
             const debugContent = document.getElementById('debugContent');
             debugContent.innerHTML = debugData.join('<br>');
@@ -238,19 +298,19 @@
             
             if (debugInfo.style.display === 'none') {
                 debugInfo.style.display = 'block';
-                toggleBtn.textContent = 'Hide Debug Info';
+                toggleBtn.textContent = 'Hide';
             } else {
                 debugInfo.style.display = 'none';
-                toggleBtn.textContent = 'Show Debug Info';
+                toggleBtn.textContent = 'Debug';
             }
         }
 
-        async function fetchNotionTasks() {
+        async function fetchTasksWithMilestones() {
             if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
                 throw new Error('Please configure your Notion integration token');
             }
 
-            addDebugInfo('Making API request to Notion...');
+            addDebugInfo('Fetching tasks and milestones...');
 
             const response = await fetch(PROXY_URL, {
                 method: 'POST',
@@ -259,20 +319,21 @@
                 },
                 body: JSON.stringify({
                     token: NOTION_TOKEN,
-                    databaseId: TASKS_DB_ID
+                    tasksDbId: TASKS_DB_ID,
+                    milestonesDbId: MILESTONES_DB_ID
                 })
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                addDebugInfo(`API Error: ${response.status} - ${errorData.error}`);
+                addDebugInfo(`Proxy Error: ${response.status} - ${errorData.error}`);
                 throw new Error(`Proxy Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
             }
 
             const data = await response.json();
-            addDebugInfo(`Received ${data.results.length} tasks from Notion`);
+            addDebugInfo(`Received ${data.totalTasks} tasks, ${data.tasksWithMilestones} with milestones`);
             
-            return data.results;
+            return data;
         }
 
         async function updateMetrics() {
@@ -283,24 +344,26 @@
                 updateApiStatus('loading');
                 addDebugInfo('Starting metrics update...');
                 
-                const tasks = await fetchNotionTasks();
+                const data = await fetchTasksWithMilestones();
+                const tasks = data.tasks;
                 
-                // Debug: Log all unique status and priority values
-                const statuses = [...new Set(tasks.map(t => t.properties.Status?.select?.name).filter(Boolean))];
-                const priorities = [...new Set(tasks.map(t => t.properties.Priority?.select?.name).filter(Boolean))];
-                
-                addDebugInfo(`Found statuses: ${statuses.join(', ')}`);
-                addDebugInfo(`Found priorities: ${priorities.join(', ')}`);
-                
-                // Calculate metrics with exact string matching
+                // Calculate metrics using milestone completion status
                 const totalTasks = tasks.length;
                 const highPriority = tasks.filter(t => t.properties.Priority?.select?.name === '🔥 High').length;
-                const completed = tasks.filter(t => t.properties.Status?.select?.name === '✅ Completed').length;
-                const inProgress = tasks.filter(t => t.properties.Status?.select?.name === '🚀 In Progress').length;
                 
-                addDebugInfo(`Metrics: Total=${totalTasks}, High Priority=${highPriority}, Completed=${completed}, In Progress=${inProgress}`);
+                // Use milestone completion status
+                const completed = tasks.filter(t => t.computedStatus === '✅ Completed').length;
+                const inProgress = tasks.filter(t => t.computedStatus === '🚀 In Progress').length;
                 
-                // Calculate this week's tasks
+                addDebugInfo(`Computed statuses: ${completed} completed, ${inProgress} in progress`);
+                
+                // Debug: Show some task completion info
+                const completedTasks = tasks.filter(t => t.computedStatus === '✅ Completed');
+                if (completedTasks.length > 0) {
+                    addDebugInfo(`Completed tasks: ${completedTasks.map(t => t.properties.Task).slice(0, 3).join(', ')}${completedTasks.length > 3 ? '...' : ''}`);
+                }
+                
+                // Calculate this week's tasks based on milestone due dates
                 const now = new Date();
                 const startOfWeek = new Date(now);
                 startOfWeek.setDate(now.getDate() - now.getDay());
@@ -311,24 +374,50 @@
                 endOfWeek.setHours(23, 59, 59, 999);
                 
                 const thisWeekTasks = tasks.filter(task => {
-                    const dueDate = task.properties['Due Date']?.date?.start;
+                    // Check milestone due date first, then fall back to task due date
+                    let dueDate = null;
+                    
+                    if (task.milestoneData && task.milestoneData.properties['Due Date']?.date?.start) {
+                        dueDate = task.milestoneData.properties['Due Date'].date.start;
+                    } else if (task.properties['Due Date']?.date?.start) {
+                        dueDate = task.properties['Due Date'].date.start;
+                    }
+                    
                     if (!dueDate) return false;
                     const taskDate = new Date(dueDate);
                     return taskDate >= startOfWeek && taskDate <= endOfWeek;
                 });
                 
                 const thisWeek = thisWeekTasks.length;
-                addDebugInfo(`This week tasks: ${thisWeek} (${thisWeekTasks.map(t => t.properties.Task).join(', ')})`);
+                addDebugInfo(`This week: ${thisWeek} tasks due`);
 
                 const completionRate = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0;
 
                 // Update display
-                document.getElementById('totalTasks').textContent = totalTasks;
-                document.getElementById('highPriority').textContent = highPriority;
-                document.getElementById('thisWeek').textContent = thisWeek;
-                document.getElementById('completed').textContent = completed;
-                document.getElementById('inProgress').textContent = inProgress;
-                document.getElementById('completion').textContent = completionRate + '%';
+                updateMetricDisplay('totalTasks', totalTasks);
+                updateMetricDisplay('highPriority', highPriority);
+                updateMetricDisplay('thisWeek', thisWeek);
+                updateMetricDisplay('completed', completed);
+                updateMetricDisplay('inProgress', inProgress);
+                updateMetricDisplay('completion', completionRate + '%');
+
+                // Update trends
+                updateTrend('totalTrend', totalTasks, previousMetrics.totalTasks);
+                updateTrend('priorityTrend', highPriority, previousMetrics.highPriority);
+                updateTrend('weekTrend', thisWeek, previousMetrics.thisWeek);
+                updateTrend('completedTrend', completed, previousMetrics.completed);
+                updateTrend('progressTrend', inProgress, previousMetrics.inProgress);
+                updateTrend('rateTrend', completionRate, previousMetrics.completionRate);
+
+                // Store for next comparison
+                previousMetrics = {
+                    totalTasks,
+                    highPriority,
+                    thisWeek,
+                    completed,
+                    inProgress,
+                    completionRate
+                };
                 
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 updateApiStatus('success');
@@ -339,7 +428,9 @@
                 addDebugInfo(`Error: ${error.message}`);
                 
                 ['totalTasks', 'highPriority', 'thisWeek', 'completed', 'inProgress', 'completion'].forEach(id => {
-                    document.getElementById(id).innerHTML = `<span class="error">Error</span>`;
+                    const element = document.getElementById(id);
+                    const icon = element.querySelector('.metric-icon');
+                    element.innerHTML = icon.outerHTML + '<span class="error">Error</span>';
                 });
                 
                 updateApiStatus('error');
@@ -348,11 +439,37 @@
             }
         }
 
+        function updateMetricDisplay(elementId, value) {
+            const element = document.getElementById(elementId);
+            const icon = element.querySelector('.metric-icon');
+            element.innerHTML = icon.outerHTML + `<span>${value}</span>`;
+        }
+
+        function updateTrend(trendId, currentValue, previousValue) {
+            const trendEl = document.getElementById(trendId);
+            if (previousValue === undefined) {
+                trendEl.textContent = '';
+                return;
+            }
+
+            const diff = currentValue - previousValue;
+            if (diff > 0) {
+                trendEl.textContent = `↗ +${diff}`;
+                trendEl.className = 'metric-trend trend-up';
+            } else if (diff < 0) {
+                trendEl.textContent = `↘ ${diff}`;
+                trendEl.className = 'metric-trend trend-down';
+            } else {
+                trendEl.textContent = '→ No change';
+                trendEl.className = 'metric-trend trend-neutral';
+            }
+        }
+
         function updateApiStatus(status) {
             const statusEl = document.getElementById('apiStatus');
             switch(status) {
                 case 'loading':
-                    statusEl.textContent = 'Loading...';
+                    statusEl.textContent = 'Updating...';
                     statusEl.className = 'api-status status-loading';
                     break;
                 case 'success':
@@ -368,19 +485,20 @@
 
         async function refreshData() {
             const btn = document.getElementById('refreshBtn');
-            btn.textContent = '⟳';
+            btn.style.transform = 'rotate(360deg)';
+            btn.style.transition = 'transform 0.6s ease';
             btn.disabled = true;
             
             await updateMetrics();
             
             setTimeout(() => {
-                btn.textContent = '↻';
+                btn.style.transform = 'rotate(0deg)';
                 btn.disabled = false;
-            }, 1000);
+            }, 600);
         }
 
         // Initial load
-        addDebugInfo('Widget initialized');
+        addDebugInfo('Widget initialized with milestone support');
         updateMetrics();
 
         // Auto-refresh every 2 minutes
