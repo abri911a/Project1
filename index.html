@@ -821,6 +821,7 @@
             }
 
             addDebugInfo('Fetching milestones from Notion...');
+            addDebugInfo(`Using Milestones DB ID: ${MILESTONES_DB_ID}`);
 
             try {
                 const response = await fetch(PROXY_URL, {
@@ -830,14 +831,14 @@
                     },
                     body: JSON.stringify({
                         token: NOTION_TOKEN,
-                        milestonesDbId: MILESTONES_DB_ID,
-                        endpoint: 'databases',
-                        action: 'query'
+                        milestonesDbId: MILESTONES_DB_ID
                     })
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    addDebugInfo(`Proxy response status: ${response.status}`);
+                    addDebugInfo(`Proxy error details: ${JSON.stringify(errorData)}`);
                     throw new Error(`Proxy Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
                 }
 
