@@ -1,13 +1,7 @@
-// netlify/functions/notion-proxy.js
-exports.handler = async (event, context) => {
-  // Only allow POST requests
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
+// netlify/functions/notion-proxy-debug.js
+// Alternative simplified version for debugging
 
+exports.handler = async (event, context) => {
   // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -25,6 +19,14 @@ exports.handler = async (event, context) => {
     };
   }
 
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
   try {
     const { token, tasksDbId, milestonesDbId } = JSON.parse(event.body);
 
@@ -36,7 +38,9 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Fetch Tasks Bank database
+    console.log('Fetching Tasks Bank database...');
+    
+    // Fetch Tasks Bank database (simplified)
     const tasksResponse = await fetch(`https://api.notion.com/v1/databases/${tasksDbId}/query`, {
       method: 'POST',
       headers: {
@@ -51,6 +55,7 @@ exports.handler = async (event, context) => {
 
     if (!tasksResponse.ok) {
       const errorText = await tasksResponse.text();
+      console.error('Tasks API error:', errorText);
       return {
         statusCode: tasksResponse.status,
         headers,
@@ -60,6 +65,11 @@ exports.handler = async (event, context) => {
         })
       };
     }
+
+    const tasksData = await tasksResponse.json();
+    console.log(`Fetched ${tasksData.results.length} tasks`);
+
+    console.log('Fetching Weekly Milestones database...');
 
     // Fetch Weekly Milestones database
     const milestonesResponse = await fetch(`https://api.notion.com/v1/databases/${milestonesDbId}/query`, {
@@ -76,6 +86,7 @@ exports.handler = async (event, context) => {
 
     if (!milestonesResponse.ok) {
       const errorText = await milestonesResponse.text();
+      console.error('Milestones API error:', errorText);
       return {
         statusCode: milestonesResponse.status,
         headers,
@@ -86,66 +97,83 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const tasksData = await tasksResponse.json();
     const milestonesData = await milestonesResponse.json();
+    console.log(`Fetched ${milestonesData.results.length} milestones`);
 
-    // Create a map of milestone URLs to milestone data for quick lookup
+    // Create a simple map of milestone IDs to milestone data
     const milestonesMap = {};
     milestonesData.results.forEach(milestone => {
-      milestonesMap[milestone.url] = milestone;
+      milestonesMap[milestone.id] = milestone;
     });
 
-    // Enrich tasks with milestone completion status
+    console.log('Processing tasks with milestone data...');
+
+    // Process tasks and add completion status from milestones
     const enrichedTasks = tasksData.results.map(task => {
       // Get linked milestones
       const linkedMilestones = task.properties['Linked to Weekly Milestone']?.relation || [];
       
-      // Find completion status from linked milestones
       let isCompleted = false;
-      let isInProgress = false;
       let milestoneData = null;
 
       if (linkedMilestones.length > 0) {
-        // Get the first linked milestone (assuming one-to-one relationship)
-        const milestoneUrl = linkedMilestones[0].id;
-        milestoneData = Object.values(milestonesMap).find(m => m.id === milestoneUrl);
+        // Get the first linked milestone
+        const milestoneId = linkedMilestones[0].id;
+        milestoneData = milestonesMap[milestoneId];
         
         if (milestoneData) {
+          // Check if milestone is completed
           isCompleted = milestoneData.properties.Completed?.checkbox === true;
-          // You can define "in progress" logic based on your workflow
-          // For now, let's say in progress = has milestone but not completed
-          isInProgress = !isCompleted;
         }
+      }
+
+      // Determine computed status
+      let computedStatus;
+      if (isCompleted) {
+        computedStatus = '✅ Completed';
+      } else if (linkedMilestones.length > 0) {
+        computedStatus = '🚀 In Progress';
+      } else {
+        computedStatus = task.properties.Status?.select?.name || '📝 Draft';
       }
 
       return {
         ...task,
-        // Add computed status based on milestone
-        computedStatus: isCompleted ? '✅ Completed' : 
-                       isInProgress ? '🚀 In Progress' : 
-                       task.properties.Status?.select?.name || '📝 Draft',
+        computedStatus: computedStatus,
         milestoneData: milestoneData
       };
     });
+
+    const tasksWithMilestones = enrichedTasks.filter(t => t.milestoneData).length;
+
+    console.log(`Processed ${enrichedTasks.length} tasks, ${tasksWithMilestones} with milestones`);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        results: enrichedTasks,  // Change from 'tasks' to 'results' to match expected format
+        results: enrichedTasks,
         milestones: milestonesData.results,
         totalTasks: enrichedTasks.length,
-        tasksWithMilestones: enrichedTasks.filter(t => t.milestoneData).length
+        tasksWithMilestones: tasksWithMilestones,
+        debug: {
+          tasksCount: tasksData.results.length,
+          milestonesCount: milestonesData.results.length,
+          enrichedTasksCount: enrichedTasks.length,
+          timestamp: new Date().toISOString()
+        }
       })
     };
 
   } catch (error) {
+    console.error('Proxy error:', error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Internal server error',
-        details: error.message
+        details: error.message,
+        stack: error.stack
       })
     };
   }
