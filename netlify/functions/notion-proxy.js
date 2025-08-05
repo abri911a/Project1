@@ -47,6 +47,12 @@ exports.handler = async (event, context) => {
                     ]
                 });
 
+                // Calculate current week based on 12-week start date
+                const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1 starts Aug 4, 2025
+                const currentDate = new Date();
+                const daysSinceStart = Math.floor((currentDate - TWELVE_WEEK_START) / (1000 * 60 * 60 * 24));
+                const currentWeekNumber = Math.min(Math.max(Math.floor(daysSinceStart / 7) + 1, 1), 12);
+                
                 // Process milestones to extract all relevant information
                 const processedMilestones = milestonesResponse.results.map(page => {
                     const props = page.properties;
@@ -55,9 +61,11 @@ exports.handler = async (event, context) => {
                     const weekName = props.Week?.select?.name || '';
                     const weekNumber = parseInt(weekName.replace('Week ', '') || '0');
                     
-                    // Calculate if it's the current week
-                    const currentDate = new Date();
-                    const isCurrentWeek = props['Is Current Week']?.formula?.boolean || false;
+                    // Check if milestone is in current week
+                    const isCurrentWeek = weekNumber === currentWeekNumber;
+                    
+                    // Also check formula/rollup fields if they exist
+                    const isCurrentFormula = props['Is Current Week']?.formula?.boolean || false;
                     const isCurrentAuto = props['Is Current (Auto)']?.rollup?.array?.[0]?.checkbox || false;
                     
                     return {
@@ -66,8 +74,10 @@ exports.handler = async (event, context) => {
                         // Add computed fields for easier access
                         computed: {
                             weekNumber,
-                            isCurrentWeek: isCurrentWeek || isCurrentAuto,
-                            completionStatus: props.Completed?.checkbox ? '✅ Completed' : '⏳ In Progress'
+                            isCurrentWeek: isCurrentWeek || isCurrentFormula || isCurrentAuto,
+                            completionStatus: props.Completed?.checkbox ? '✅ Completed' : '⏳ In Progress',
+                            dueDate: props['Due Date']?.date?.start || null,
+                            weekStartDate: props['Week Start Date']?.date?.start || null
                         }
                     };
                 });
@@ -95,9 +105,23 @@ exports.handler = async (event, context) => {
                             ).length,
                             focusAreas,
                             weeks,
+                            currentWeek: currentWeekNumber,
                             currentWeekMilestones: processedMilestones.filter(m => 
                                 m.computed.isCurrentWeek
-                            ).length
+                            ).length,
+                            weekBreakdown: weeks.map(week => {
+                                const weekNum = parseInt(week.replace('Week ', '') || '0');
+                                const weekMilestones = processedMilestones.filter(m => 
+                                    m.computed.weekNumber === weekNum
+                                );
+                                return {
+                                    week: week,
+                                    weekNumber: weekNum,
+                                    isCurrent: weekNum === currentWeekNumber,
+                                    total: weekMilestones.length,
+                                    completed: weekMilestones.filter(m => m.properties.Completed?.checkbox).length
+                                };
+                            })
                         }
                     })
                 };
