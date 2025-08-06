@@ -855,18 +855,26 @@
         function processMilestone(milestone) {
             const props = milestone.properties;
             
+            // Debug log to see what we're getting
+            const taskName = props.Task?.title?>[0]?.text?.content || 'Untitled';
+            const weekSelect = props.Week?.select?.name || 'No Week';
+            
             return {
                 id: milestone.id,
-                task: props.Task?.title?.[0]?.text?.content || 'Untitled',
+                task: taskName,
                 completed: props.Completed?.checkbox || false,
                 focusArea: props['Focus Area']?.select?.name || 'None',
-                week: props.Week?.select?.name || 'Unassigned',
-                weekNumber: parseInt(props.Week?.select?.name?.replace('Week ', '') || '0'),
+                week: weekSelect,
+                weekNumber: parseInt(weekSelect.replace('Week ', '') || '0'),
                 deadlineType: props['Deadline Type']?.select?.name || 'Flexible',
                 dueDate: props['Due Date']?.date?.start || null,
+                weekStartDate: props['Week Start Date']?.date?.start || null,
                 notes: props.Notes?.rich_text?.[0]?.text?.content || '',
-                isCurrent: props['Is Current Week']?.formula?.boolean || false,
-                status: props.Status?.formula?.string || 'Not Started'
+                isCurrent: props['Is Current Week']?.formula?.boolean || 
+                          props['Is Current (Auto)']?.rollup?.array?.[0]?.checkbox || 
+                          false,
+                status: props.Status?.formula?.string || 'Not Started',
+                weekReference: props['Week Reference']?.relation || []
             };
         }
 
@@ -876,16 +884,34 @@
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            // Get current week milestones
-            const thisWeek = focusMilestones.filter(m => 
-                m.weekNumber === currentWeek.number || m.isCurrent
-            );
+            // Get current week milestones for this focus area
+            const thisWeek = focusMilestones.filter(m => {
+                // Use the same logic as overall current week calculation
+                if (m.weekNumber === currentWeek.number) return true;
+                if (m.isCurrent) return true;
+                
+                if (m.dueDate) {
+                    const dueDate = new Date(m.dueDate);
+                    if (dueDate >= currentWeek.start && dueDate <= currentWeek.end) return true;
+                }
+                
+                if (m.weekStartDate) {
+                    const weekStartDate = new Date(m.weekStartDate);
+                    const daysDiff = Math.abs((weekStartDate - currentWeek.start) / (1000 * 60 * 60 * 24));
+                    if (daysDiff < 7) return true;
+                }
+                
+                return false;
+            });
+            
+            const thisWeekCompleted = thisWeek.filter(m => m.completed).length;
             
             return {
                 total,
                 completed,
                 completionRate,
                 thisWeek: thisWeek.length,
+                thisWeekCompleted,
                 milestones: focusMilestones
             };
         }
@@ -959,8 +985,8 @@
                 document.getElementById('totalMilestones').textContent = totalMilestones;
                 document.getElementById('completedMilestones').textContent = completedMilestones;
                 document.getElementById('completionRate').textContent = `${completionRate}% completion rate`;
-                document.getElementById('thisWeekMilestones').textContent = thisWeekMilestones;
-                document.getElementById('thisWeekSubtext').textContent = `Week ${currentWeek.number} milestones`;
+                document.getElementById('thisWeekMilestones').textContent = thisWeekTotal;
+                document.getElementById('thisWeekSubtext').textContent = `Week ${currentWeek.number}: ${thisWeekCompleted}/${thisWeekTotal} completed`;
                 document.getElementById('criticalMilestones').textContent = criticalMilestones;
                 
                 // Calculate and update focus area metrics
