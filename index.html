@@ -738,13 +738,26 @@
         const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
         
         // Map Week Reference IDs to Week Numbers
-        // These IDs are from the Weekly Scorecard entries
+        // IMPORTANT: Only the Weekly Scorecard entry IDs should be here
         const WEEK_REFERENCE_MAP = {
-            '2421495ce9ab80d9a954e11c828688a9': 1,  // Week 1 Scorecard
-            '2421495ce9ab81058a5dfdc58ca483fb': 1,  // Alternative Week 1 ID (if exists)
-            '2421495ce9ab81e38f42c977be4ab77b': 11  // Week 11 Scorecard
-            // Add more mappings as discovered
+            // The actual Week 1 scorecard page ID (from "Week 1 - Aug 4-10")
+            '2421495c-e9ab-8105-8a5d-fdc58ca483fb': 1,  // Week 1 Scorecard
+            
+            // Map other discovered week scorecards
+            '2421495c-e9ab-81be-9b76-c6a1105f7f29': 2,  // Week 2 - Aug 11-17
+            '2421495c-e9ab-81b6-8ec5-fb68d89ad153': 3,  // Week 3 - Aug 18-24
+            '2421495c-e9ab-8194-9bbc-c60146c2b950': 4,  // Week 4 - Aug 25-31
+            '2421495c-e9ab-815d-93ff-dd6e162a08d1': 5,  // Week 5 - Sep 1-7
+            
+            // Continue mapping as discovered...
         };
+        
+        // These IDs appear to be something else (not scorecard entries) and should be ignored
+        const IGNORE_AUTO_MAPPING = [
+            '2421495c-e9ab-80b5-88ed-d428e228d346', // Not a scorecard
+            '2421495c-e9ab-8113-9acc-c6986f533743', // Not a scorecard  
+            '2421495c-e9ab-80d9-a954-e11c828688a9'  // Not a scorecard (might be Week Reference template)
+        ];
         
         let isLoading = false;
         let debugData = [];
@@ -884,25 +897,20 @@
             if (weekReferences && weekReferences.length > 0) {
                 const refId = weekReferences[0].id;
                 
-                // Check our predefined mappings first
-                if (WEEK_REFERENCE_MAP[refId]) {
+                // Check if this ID should be ignored (not a scorecard)
+                if (IGNORE_AUTO_MAPPING.includes(refId)) {
+                    // This is not a valid scorecard reference, ignore it
+                    addDebugInfo(`Ignoring non-scorecard reference: ${refId.substring(0, 8)}... for "${taskName.substring(0, 30)}..."`);
+                } else if (WEEK_REFERENCE_MAP[refId]) {
+                    // This is a known scorecard reference
                     weekNumber = WEEK_REFERENCE_MAP[refId];
                     hasValidWeekReference = true;
                 } else if (weekSelect && weekSelect.startsWith('Week ')) {
-                    // Only use Week select to create mapping if we have a Week Reference
+                    // Unknown reference - log it for investigation
                     const extractedWeek = parseInt(weekSelect.replace('Week ', '').trim());
-                    if (extractedWeek > 0 && extractedWeek <= 12) {
-                        weekNumber = extractedWeek;
-                        WEEK_REFERENCE_MAP[refId] = extractedWeek;
-                        hasValidWeekReference = true;
-                        addDebugInfo(`Discovered new Week Reference: ${refId} -> Week ${extractedWeek}`);
-                    }
+                    addDebugInfo(`Unknown Week Reference found: ${refId} for Week ${extractedWeek} - "${taskName.substring(0, 30)}..."`);
+                    // Don't auto-map unknown references
                 }
-            }
-            
-            // Debug logging for Week 1 milestones
-            if (hasValidWeekReference && weekNumber === 1) {
-                addDebugInfo(`Week 1 milestone: "${taskName.substring(0, 30)}..." (Ref: ${weekReferences[0]?.id?.substring(0, 8)}...)`);
             }
             
             return {
