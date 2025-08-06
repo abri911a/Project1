@@ -83,6 +83,7 @@ exports.handler = async (event, context) => {
         // Step 2: Process each task
         let milestonesCreated = 0;
         let tasksLinked = 0;
+        let duplicatesSkipped = 0;
         const errors = [];
 
         for (const task of candidateTasks) {
@@ -91,6 +92,39 @@ exports.handler = async (event, context) => {
                 
                 // Get task title
                 const taskName = taskProps.Task?.title?.[0]?.text?.content || 'Untitled Task';
+                
+                console.log(`Processing task: ${taskName}`);
+                
+                // Check if a milestone already exists for this task
+                // Query the milestones database to see if there's already a milestone with this task name
+                const existingMilestoneQuery = await notion.databases.query({
+                    database_id: MILESTONES_DB_ID,
+                    filter: {
+                        property: "Task",
+                        title: {
+                            equals: taskName
+                        }
+                    },
+                    page_size: 10
+                });
+                
+                if (existingMilestoneQuery.results.length > 0) {
+                    console.log(`⚠️ Milestone already exists for task: ${taskName}`);
+                    duplicatesSkipped++;
+                    
+                    // Link the task to the existing milestone if not already linked
+                    const existingMilestone = existingMilestoneQuery.results[0];
+                    await notion.pages.update({
+                        page_id: task.id,
+                        properties: {
+                            'Linked to Weekly Milestone': {
+                                relation: [{ id: existingMilestone.id }]
+                            }
+                        }
+                    });
+                    console.log('✅ Linked task to existing milestone');
+                    continue;
+                }
                 
                 // Get other properties
                 const focusArea = taskProps['Focus Area']?.select?.name;
@@ -207,6 +241,7 @@ exports.handler = async (event, context) => {
                     tasksProcessed: candidateTasks.length,
                     milestonesCreated,
                     tasksLinked,
+                    duplicatesSkipped,
                     errors: errors.length
                 },
                 errors: errors.length > 0 ? errors : undefined
