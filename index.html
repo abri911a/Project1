@@ -856,7 +856,7 @@
             const props = milestone.properties;
             
             // Debug log to see what we're getting
-            const taskName = props.Task?.title?>[0]?.text?.content || 'Untitled';
+            const taskName = props.Task?.title?.[0]?.text?.content || 'Untitled';
             const weekSelect = props.Week?.select?.name || 'No Week';
             
             return {
