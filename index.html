@@ -737,6 +737,13 @@
         // 12 Week Year Start Date - Update this to your actual start date
         const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
         
+        // Map Week Reference IDs to Week Numbers (from the fetched data)
+        const WEEK_REFERENCE_MAP = {
+            '2421495ce9ab80d9a954e11c828688a9': 1,  // Week 1
+            '2421495ce9ab81e38f42c977be4ab77b': 11  // Week 11
+            // Add more mappings as you discover them
+        };
+        
         let isLoading = false;
         let debugData = [];
         let allMilestones = [];
@@ -855,16 +862,31 @@
         function processMilestone(milestone) {
             const props = milestone.properties;
             
-            // Debug log to see what we're getting
+            // Get basic properties
             const taskName = props.Task?.title?.[0]?.text?.content || 'Untitled';
             const weekSelect = props.Week?.select?.name || 'No Week';
             const weekReferences = props['Week Reference']?.relation || [];
             
-            // Extract week number from Week Reference if available
-            let inferredWeekNumber = parseInt(weekSelect.replace('Week ', '') || '0');
-            
-            // If we have a Week Reference, we can trust that more than the Week select field
-            const hasWeekReference = weekReferences.length > 0;
+            // Determine week number based on Week Reference
+            let weekNumber = 0;
+            if (weekReferences.length > 0) {
+                const refId = weekReferences[0].id;
+                // Check if we have this reference mapped
+                if (WEEK_REFERENCE_MAP[refId]) {
+                    weekNumber = WEEK_REFERENCE_MAP[refId];
+                } else {
+                    // Try to extract from Week select as fallback
+                    weekNumber = parseInt(weekSelect.replace('Week ', '') || '0');
+                    // Store this mapping for future use
+                    if (weekNumber > 0) {
+                        WEEK_REFERENCE_MAP[refId] = weekNumber;
+                        addDebugInfo(`Discovered Week Reference mapping: ${refId} -> Week ${weekNumber}`);
+                    }
+                }
+            } else {
+                // Fallback to Week select field
+                weekNumber = parseInt(weekSelect.replace('Week ', '') || '0');
+            }
             
             return {
                 id: milestone.id,
@@ -872,8 +894,8 @@
                 completed: props.Completed?.checkbox || false,
                 focusArea: props['Focus Area']?.select?.name || 'None',
                 week: weekSelect,
-                weekNumber: inferredWeekNumber,
-                hasWeekReference: hasWeekReference,
+                weekNumber: weekNumber,
+                hasWeekReference: weekReferences.length > 0,
                 weekReferenceIds: weekReferences.map(ref => ref.id),
                 deadlineType: props['Deadline Type']?.select?.name || 'Flexible',
                 dueDate: props['Due Date']?.date?.start || null,
@@ -892,12 +914,20 @@
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            // Get current week milestones for this focus area - simplified logic
+            // Get current week milestones for this focus area based on Week Reference
             const thisWeek = focusMilestones.filter(m => {
-                // Check if Week field matches current week
-                if (m.week === `Week ${currentWeek.number}`) return true;
+                // Primary: Check if weekNumber matches current week (from Week Reference)
                 if (m.weekNumber === currentWeek.number) return true;
+                
+                // Secondary: Check if marked as current
                 if (m.isCurrent) return true;
+                
+                // Tertiary: Check by due date
+                if (m.dueDate) {
+                    const dueDate = new Date(m.dueDate);
+                    return dueDate >= currentWeek.start && dueDate <= currentWeek.end;
+                }
+                
                 return false;
             });
             
@@ -917,7 +947,7 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             
-            // Filter for current week milestones
+            // Filter for current week milestones using Week Reference logic
             const currentWeekMilestones = milestones
                 .filter(m => m.weekNumber === currentWeek.number || m.isCurrent)
                 .slice(0, 5); // Show max 5 milestones
@@ -957,26 +987,44 @@
                 const rawMilestones = await fetchMilestones();
                 allMilestones = rawMilestones.map(processMilestone);
                 
+                // Debug: Log week reference mappings discovered
+                addDebugInfo(`Week Reference mappings discovered: ${Object.keys(WEEK_REFERENCE_MAP).length}`);
+                
                 // Calculate overall metrics
                 const totalMilestones = allMilestones.length;
                 const completedMilestones = allMilestones.filter(m => m.completed).length;
                 const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
+                
+                // Calculate this week's milestones using Week Reference
                 const thisWeekMilestones = allMilestones.filter(m => {
-                    // Method 1: Check week number
+                    // Primary: Check weekNumber (from Week Reference)
                     if (m.weekNumber === currentWeek.number) return true;
                     
-                    // Method 2: Check if marked as current
+                    // Secondary: Check if marked as current
                     if (m.isCurrent) return true;
                     
-                    // Method 3: Check by due date
+                    // Tertiary: Check by due date
                     if (m.dueDate) {
                         const dueDate = new Date(m.dueDate);
                         return dueDate >= currentWeek.start && dueDate <= currentWeek.end;
                     }
                     
                     return false;
-                }).length;
+                });
+                
+                const thisWeekTotal = thisWeekMilestones.length;
+                const thisWeekCompleted = thisWeekMilestones.filter(m => m.completed).length;
+                
+                // Debug week breakdown
+                const weekBreakdown = {};
+                for (let i = 1; i <= 12; i++) {
+                    const weekMilestones = allMilestones.filter(m => m.weekNumber === i);
+                    if (weekMilestones.length > 0) {
+                        weekBreakdown[`Week ${i}`] = weekMilestones.length;
+                    }
+                }
+                addDebugInfo(`Milestones by week: ${JSON.stringify(weekBreakdown)}`);
                 
                 // Update overall stats
                 document.getElementById('totalMilestones').textContent = totalMilestones;
