@@ -852,9 +852,16 @@
                 }
 
                 const data = await response.json();
-                addDebugInfo(`Fetched ${data.results?.length || 0} milestones`);
+                const results = data.results || [];
+                addDebugInfo(`Fetched ${results.length} milestones from Notion`);
                 
-                return data.results || [];
+                // Debug: Check for milestones with Week 1 in their Week field
+                const week1BySelect = results.filter(m => 
+                    m.properties?.Week?.select?.name === 'Week 1'
+                ).length;
+                addDebugInfo(`Milestones with "Week 1" in Week select field: ${week1BySelect}`);
+                
+                return results;
             } catch (error) {
                 addDebugInfo(`Error fetching milestones: ${error.message}`);
                 throw error;
@@ -994,36 +1001,67 @@
                 const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
                 
-                // Calculate this week's milestones - STRICT Week Reference only
+                // Calculate this week's milestones - DEBUG VERSION
+                const debugWeek1 = [];
+                
+                // First, let's see ALL milestones that think they're Week 1
+                allMilestones.forEach(m => {
+                    // Check various ways a milestone might be counted as Week 1
+                    const reasons = [];
+                    
+                    if (m.week === 'Week 1') {
+                        reasons.push('Week select = Week 1');
+                    }
+                    if (m.weekNumber === 1) {
+                        reasons.push(`weekNumber = 1 (hasRef: ${m.hasValidWeekReference})`);
+                    }
+                    if (m.isCurrent) {
+                        reasons.push('Is Current = true');
+                    }
+                    
+                    if (reasons.length > 0) {
+                        debugWeek1.push({
+                            task: m.task.substring(0, 40),
+                            reasons: reasons.join(', '),
+                            hasRef: m.hasValidWeekReference,
+                            refId: m.weekReferenceIds[0]?.substring(0, 8) || 'none'
+                        });
+                    }
+                });
+                
+                addDebugInfo(`=== DETAILED Week 1 Analysis ===`);
+                addDebugInfo(`Total items marked as Week 1 in some way: ${debugWeek1.length}`);
+                
+                // Show first 5 examples
+                debugWeek1.slice(0, 5).forEach((item, idx) => {
+                    addDebugInfo(`${idx + 1}. "${item.task}..." - ${item.reasons} - Ref: ${item.refId}`);
+                });
+                
+                // Now calculate using ONLY strict Week Reference
                 const thisWeekMilestones = allMilestones.filter(m => {
-                    // Must have a valid Week Reference AND match current week number
-                    return m.hasValidWeekReference === true && m.weekNumber === currentWeek.number;
+                    return m.hasValidWeekReference === true && m.weekNumber === 1;
                 });
                 
                 const thisWeekTotal = thisWeekMilestones.length;
                 const thisWeekCompleted = thisWeekMilestones.filter(m => m.completed).length;
                 
-                // Enhanced debug information
-                addDebugInfo(`=== Week ${currentWeek.number} Analysis ===`);
-                addDebugInfo(`Total milestones with Week Reference: ${allMilestones.filter(m => m.hasValidWeekReference).length}`);
-                addDebugInfo(`Week ${currentWeek.number} milestones (strict): ${thisWeekTotal}`);
-                addDebugInfo(`Week ${currentWeek.number} completed: ${thisWeekCompleted}`);
+                // More debugging
+                addDebugInfo(`=== STRICT Week 1 Count ===`);
+                addDebugInfo(`Milestones with valid Week Reference AND weekNumber=1: ${thisWeekTotal}`);
+                addDebugInfo(`Completed: ${thisWeekCompleted}`);
                 
-                // Debug: Show distribution of all milestones
-                const weekBreakdown = {};
-                const unmappedCount = allMilestones.filter(m => !m.hasValidWeekReference).length;
-                
-                for (let i = 1; i <= 12; i++) {
-                    const weekMilestones = allMilestones.filter(m => 
-                        m.hasValidWeekReference === true && m.weekNumber === i
-                    );
-                    if (weekMilestones.length > 0) {
-                        weekBreakdown[`Week ${i}`] = weekMilestones.length;
+                // Show unique Week Reference IDs for Week 1
+                const week1RefIds = new Set();
+                thisWeekMilestones.forEach(m => {
+                    if (m.weekReferenceIds[0]) {
+                        week1RefIds.add(m.weekReferenceIds[0]);
                     }
-                }
-                
-                addDebugInfo(`Milestone distribution by week: ${JSON.stringify(weekBreakdown)}`);
-                addDebugInfo(`Unmapped milestones (no Week Reference): ${unmappedCount}`);
+                });
+                addDebugInfo(`Unique Week Reference IDs for Week 1: ${week1RefIds.size}`);
+                week1RefIds.forEach(id => {
+                    const count = thisWeekMilestones.filter(m => m.weekReferenceIds[0] === id).length;
+                    addDebugInfo(`  Ref ${id.substring(0, 8)}...: ${count} milestones`);
+                });
                 
                 // Update overall stats
                 document.getElementById('totalMilestones').textContent = totalMilestones;
