@@ -858,6 +858,13 @@
             // Debug log to see what we're getting
             const taskName = props.Task?.title?.[0]?.text?.content || 'Untitled';
             const weekSelect = props.Week?.select?.name || 'No Week';
+            const weekReferences = props['Week Reference']?.relation || [];
+            
+            // Extract week number from Week Reference if available
+            let inferredWeekNumber = parseInt(weekSelect.replace('Week ', '') || '0');
+            
+            // If we have a Week Reference, we can trust that more than the Week select field
+            const hasWeekReference = weekReferences.length > 0;
             
             return {
                 id: milestone.id,
@@ -865,7 +872,9 @@
                 completed: props.Completed?.checkbox || false,
                 focusArea: props['Focus Area']?.select?.name || 'None',
                 week: weekSelect,
-                weekNumber: parseInt(weekSelect.replace('Week ', '') || '0'),
+                weekNumber: inferredWeekNumber,
+                hasWeekReference: hasWeekReference,
+                weekReferenceIds: weekReferences.map(ref => ref.id),
                 deadlineType: props['Deadline Type']?.select?.name || 'Flexible',
                 dueDate: props['Due Date']?.date?.start || null,
                 weekStartDate: props['Week Start Date']?.date?.start || null,
@@ -873,8 +882,7 @@
                 isCurrent: props['Is Current Week']?.formula?.boolean || 
                           props['Is Current (Auto)']?.rollup?.array?.[0]?.checkbox || 
                           false,
-                status: props.Status?.formula?.string || 'Not Started',
-                weekReference: props['Week Reference']?.relation || []
+                status: props.Status?.formula?.string || 'Not Started'
             };
         }
 
@@ -884,23 +892,12 @@
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            // Get current week milestones for this focus area
+            // Get current week milestones for this focus area - simplified logic
             const thisWeek = focusMilestones.filter(m => {
-                // Use the same logic as overall current week calculation
+                // Check if Week field matches current week
+                if (m.week === `Week ${currentWeek.number}`) return true;
                 if (m.weekNumber === currentWeek.number) return true;
                 if (m.isCurrent) return true;
-                
-                if (m.dueDate) {
-                    const dueDate = new Date(m.dueDate);
-                    if (dueDate >= currentWeek.start && dueDate <= currentWeek.end) return true;
-                }
-                
-                if (m.weekStartDate) {
-                    const weekStartDate = new Date(m.weekStartDate);
-                    const daysDiff = Math.abs((weekStartDate - currentWeek.start) / (1000 * 60 * 60 * 24));
-                    if (daysDiff < 7) return true;
-                }
-                
                 return false;
             });
             
