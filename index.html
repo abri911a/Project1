@@ -740,23 +740,34 @@
         // Map Week Reference IDs to Week Numbers
         // IMPORTANT: Only the Weekly Scorecard entry IDs should be here
         const WEEK_REFERENCE_MAP = {
-            // The actual Week 1 scorecard page ID (from "Week 1 - Aug 4-10")
-            '2421495c-e9ab-8105-8a5d-fdc58ca483fb': 1,  // Week 1 Scorecard
+            // Week 1 Scorecard - confirmed to have 27 milestones
+            '2421495c-e9ab-80d9-a954-e11c828688a9': 1,  // Week 1 Scorecard (27 milestones)
             
-            // Map other discovered week scorecards
+            // Other week scorecards discovered from debug
+            '2421495c-e9ab-812d-9fdc-c85af2665b7c': 2,  // Week 2
+            '2421495c-e9ab-8130-9ac5-f6a074f3a17a': 3,  // Week 3
+            '2421495c-e9ab-81d8-9680-df3499e4a322': 3,  // Week 3 (alt)
+            '2421495c-e9ab-81da-b521-dc78ce8d0a74': 6,  // Week 6
+            '2421495c-e9ab-813c-9cf3-eba5b4f5576c': 6,  // Week 6 (alt)
+            '2421495c-e9ab-8151-bf39-c2d9ab1172c5': 7,  // Week 7
+            '2421495c-e9ab-81b2-98c5-da75b9d01791': 8,  // Week 8
+            '2421495c-e9ab-81bb-811e-f9aa61eb3a39': 9,  // Week 9
+            '2421495c-e9ab-81e3-8f42-c977be4ab77b': 10, // Week 10
+            '2421495c-e9ab-81e38f42-c977be4ab77b': 11,  // Week 11
+            
+            // Week pages from search results (might be needed)
+            '2421495c-e9ab-8105-8a5d-fdc58ca483fb': 1,  // Alternative Week 1 page
             '2421495c-e9ab-81be-9b76-c6a1105f7f29': 2,  // Week 2 - Aug 11-17
             '2421495c-e9ab-81b6-8ec5-fb68d89ad153': 3,  // Week 3 - Aug 18-24
             '2421495c-e9ab-8194-9bbc-c60146c2b950': 4,  // Week 4 - Aug 25-31
             '2421495c-e9ab-815d-93ff-dd6e162a08d1': 5,  // Week 5 - Sep 1-7
-            
-            // Continue mapping as discovered...
         };
         
-        // These IDs appear to be something else (not scorecard entries) and should be ignored
+        // These IDs are NOT scorecard entries and should be ignored
         const IGNORE_AUTO_MAPPING = [
-            '2421495c-e9ab-80b5-88ed-d428e228d346', // Not a scorecard
-            '2421495c-e9ab-8113-9acc-c6986f533743', // Not a scorecard  
-            '2421495c-e9ab-80d9-a954-e11c828688a9'  // Not a scorecard (might be Week Reference template)
+            '2421495c-e9ab-80b5-88ed-d428e228d346', // Not a scorecard (17 milestones)
+            '2421495c-e9ab-8113-9acc-c6986f533743', // Not a scorecard (11 milestones)
+            // Don't ignore the main Week 1 reference anymore
         ];
         
         let isLoading = false;
