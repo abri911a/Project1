@@ -558,7 +558,7 @@
                 <div class="stat-value" id="completedMilestones">
                     <span class="loading">...</span>
                 </div>
-                <div class="stat-label">Completed</div>
+                <div class="stat-label">Week Progress</div>
                 <div class="stat-subtext" id="completionRate">0% completion rate</div>
             </div>
             <div class="stat-card">
@@ -1016,76 +1016,52 @@
                 
                 // Calculate overall metrics
                 const totalMilestones = allMilestones.length;
-                const completedMilestones = allMilestones.filter(m => m.completed).length;
-                const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+                const totalCompletedMilestones = allMilestones.filter(m => m.completed).length;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
                 
-                // Calculate this week's milestones - DEBUG VERSION
-                const debugWeek1 = [];
-                
-                // First, let's see ALL milestones that think they're Week 1
-                allMilestones.forEach(m => {
-                    // Check various ways a milestone might be counted as Week 1
-                    const reasons = [];
-                    
-                    if (m.week === 'Week 1') {
-                        reasons.push('Week select = Week 1');
-                    }
-                    if (m.weekNumber === 1) {
-                        reasons.push(`weekNumber = 1 (hasRef: ${m.hasValidWeekReference})`);
-                    }
-                    if (m.isCurrent) {
-                        reasons.push('Is Current = true');
-                    }
-                    
-                    if (reasons.length > 0) {
-                        debugWeek1.push({
-                            task: m.task.substring(0, 40),
-                            reasons: reasons.join(', '),
-                            hasRef: m.hasValidWeekReference,
-                            refId: m.weekReferenceIds[0]?.substring(0, 8) || 'none'
-                        });
-                    }
-                });
-                
-                addDebugInfo(`=== DETAILED Week 1 Analysis ===`);
-                addDebugInfo(`Total items marked as Week 1 in some way: ${debugWeek1.length}`);
-                
-                // Show first 5 examples
-                debugWeek1.slice(0, 5).forEach((item, idx) => {
-                    addDebugInfo(`${idx + 1}. "${item.task}..." - ${item.reasons} - Ref: ${item.refId}`);
-                });
-                
-                // Now calculate using ONLY strict Week Reference
+                // Calculate this week's milestones - STRICT Week Reference only
                 const thisWeekMilestones = allMilestones.filter(m => {
-                    return m.hasValidWeekReference === true && m.weekNumber === 1;
+                    // Must have a valid Week Reference AND match current week number
+                    return m.hasValidWeekReference === true && m.weekNumber === currentWeek.number;
                 });
                 
                 const thisWeekTotal = thisWeekMilestones.length;
                 const thisWeekCompleted = thisWeekMilestones.filter(m => m.completed).length;
                 
-                // More debugging
-                addDebugInfo(`=== STRICT Week 1 Count ===`);
-                addDebugInfo(`Milestones with valid Week Reference AND weekNumber=1: ${thisWeekTotal}`);
-                addDebugInfo(`Completed: ${thisWeekCompleted}`);
+                // Enhanced debug information
+                addDebugInfo(`=== Week ${currentWeek.number} Analysis ===`);
+                addDebugInfo(`Total milestones with Week Reference: ${allMilestones.filter(m => m.hasValidWeekReference).length}`);
+                addDebugInfo(`Week ${currentWeek.number} milestones (strict): ${thisWeekTotal}`);
+                addDebugInfo(`Week ${currentWeek.number} completed: ${thisWeekCompleted}`);
                 
-                // Show unique Week Reference IDs for Week 1
-                const week1RefIds = new Set();
-                thisWeekMilestones.forEach(m => {
-                    if (m.weekReferenceIds[0]) {
-                        week1RefIds.add(m.weekReferenceIds[0]);
+                // Debug: Show distribution of all milestones
+                const weekBreakdown = {};
+                const unmappedCount = allMilestones.filter(m => !m.hasValidWeekReference).length;
+                
+                for (let i = 1; i <= 12; i++) {
+                    const weekMilestones = allMilestones.filter(m => 
+                        m.hasValidWeekReference === true && m.weekNumber === i
+                    );
+                    if (weekMilestones.length > 0) {
+                        weekBreakdown[`Week ${i}`] = weekMilestones.length;
                     }
-                });
-                addDebugInfo(`Unique Week Reference IDs for Week 1: ${week1RefIds.size}`);
-                week1RefIds.forEach(id => {
-                    const count = thisWeekMilestones.filter(m => m.weekReferenceIds[0] === id).length;
-                    addDebugInfo(`  Ref ${id.substring(0, 8)}...: ${count} milestones`);
-                });
+                }
+                
+                addDebugInfo(`Milestone distribution by week: ${JSON.stringify(weekBreakdown)}`);
+                addDebugInfo(`Unmapped milestones (no Week Reference): ${unmappedCount}`);
                 
                 // Update overall stats
                 document.getElementById('totalMilestones').textContent = totalMilestones;
-                document.getElementById('completedMilestones').textContent = completedMilestones;
-                document.getElementById('completionRate').textContent = `${completionRate}% completion rate`;
+                
+                // Show current week completed / current week total in the card
+                document.getElementById('completedMilestones').textContent = `${thisWeekCompleted}/${thisWeekTotal}`;
+                
+                // Completion rate should be based on CURRENT WEEK only
+                const currentWeekCompletionRate = thisWeekTotal > 0 
+                    ? Math.round((thisWeekCompleted / thisWeekTotal) * 100) 
+                    : 0;
+                document.getElementById('completionRate').textContent = `${currentWeekCompletionRate}% week completion`;
+                
                 document.getElementById('thisWeekMilestones').textContent = thisWeekTotal;
                 document.getElementById('thisWeekSubtext').textContent = `Week ${currentWeek.number}: ${thisWeekCompleted}/${thisWeekTotal} completed`;
                 document.getElementById('criticalMilestones').textContent = criticalMilestones;
