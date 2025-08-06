@@ -737,11 +737,13 @@
         // 12 Week Year Start Date - Update this to your actual start date
         const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
         
-        // Map Week Reference IDs to Week Numbers (from the fetched data)
+        // Map Week Reference IDs to Week Numbers
+        // These IDs are from the Weekly Scorecard entries
         const WEEK_REFERENCE_MAP = {
-            '2421495ce9ab80d9a954e11c828688a9': 1,  // Week 1
-            '2421495ce9ab81e38f42c977be4ab77b': 11  // Week 11
-            // Add more mappings as you discover them
+            '2421495ce9ab80d9a954e11c828688a9': 1,  // Week 1 Scorecard
+            '2421495ce9ab81058a5dfdc58ca483fb': 1,  // Alternative Week 1 ID (if exists)
+            '2421495ce9ab81e38f42c977be4ab77b': 11  // Week 11 Scorecard
+            // Add more mappings as discovered
         };
         
         let isLoading = false;
@@ -867,31 +869,33 @@
             const weekSelect = props.Week?.select?.name || 'No Week';
             const weekReferences = props['Week Reference']?.relation || [];
             
-            // Determine week number - ONLY from Week Reference, not from Week select
-            let weekNumber = 0;
+            // Determine week number STRICTLY from Week Reference only
+            let weekNumber = null; // Use null to indicate no valid week
             let hasValidWeekReference = false;
             
-            if (weekReferences.length > 0) {
+            // Only assign a week number if there's a Week Reference relation
+            if (weekReferences && weekReferences.length > 0) {
                 const refId = weekReferences[0].id;
-                // Check if we have this reference mapped
+                
+                // Check our predefined mappings first
                 if (WEEK_REFERENCE_MAP[refId]) {
                     weekNumber = WEEK_REFERENCE_MAP[refId];
                     hasValidWeekReference = true;
-                } else {
-                    // Try to extract from Week select to create mapping
-                    const extractedWeek = parseInt(weekSelect.replace('Week ', '') || '0');
-                    if (extractedWeek > 0) {
+                } else if (weekSelect && weekSelect.startsWith('Week ')) {
+                    // Only use Week select to create mapping if we have a Week Reference
+                    const extractedWeek = parseInt(weekSelect.replace('Week ', '').trim());
+                    if (extractedWeek > 0 && extractedWeek <= 12) {
                         weekNumber = extractedWeek;
                         WEEK_REFERENCE_MAP[refId] = extractedWeek;
                         hasValidWeekReference = true;
-                        addDebugInfo(`Discovered Week Reference mapping: ${refId} -> Week ${extractedWeek}`);
+                        addDebugInfo(`Discovered new Week Reference: ${refId} -> Week ${extractedWeek}`);
                     }
                 }
             }
             
-            // Debug log for milestones
-            if (weekNumber === 1) {
-                addDebugInfo(`Week 1 milestone found: "${taskName}" (Has Week Ref: ${hasValidWeekReference})`);
+            // Debug logging for Week 1 milestones
+            if (hasValidWeekReference && weekNumber === 1) {
+                addDebugInfo(`Week 1 milestone: "${taskName.substring(0, 30)}..." (Ref: ${weekReferences[0]?.id?.substring(0, 8)}...)`);
             }
             
             return {
@@ -920,10 +924,9 @@
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            // Get current week milestones for this focus area - ONLY use Week Reference
+            // Current week milestones - STRICT Week Reference only
             const thisWeek = focusMilestones.filter(m => {
-                // ONLY count milestones with valid Week Reference matching current week
-                return m.hasValidWeekReference && m.weekNumber === currentWeek.number;
+                return m.hasValidWeekReference === true && m.weekNumber === currentWeek.number;
             });
             
             const thisWeekCompleted = thisWeek.filter(m => m.completed).length;
@@ -942,9 +945,9 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             
-            // Filter for current week milestones using Week Reference ONLY
+            // Filter for current week milestones - STRICT Week Reference only
             const currentWeekMilestones = milestones
-                .filter(m => m.hasValidWeekReference && m.weekNumber === currentWeek.number)
+                .filter(m => m.hasValidWeekReference === true && m.weekNumber === currentWeek.number)
                 .slice(0, 5); // Show max 5 milestones
             
             if (currentWeekMilestones.length === 0) {
@@ -991,30 +994,36 @@
                 const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
                 
-                // Calculate this week's milestones using Week Reference ONLY
+                // Calculate this week's milestones - STRICT Week Reference only
                 const thisWeekMilestones = allMilestones.filter(m => {
-                    // ONLY count milestones that have a valid Week Reference matching current week
-                    if (m.hasValidWeekReference && m.weekNumber === currentWeek.number) {
-                        return true;
-                    }
-                    
-                    // Don't use fallback methods that might be causing overcounting
-                    return false;
+                    // Must have a valid Week Reference AND match current week number
+                    return m.hasValidWeekReference === true && m.weekNumber === currentWeek.number;
                 });
                 
                 const thisWeekTotal = thisWeekMilestones.length;
                 const thisWeekCompleted = thisWeekMilestones.filter(m => m.completed).length;
                 
-                // Debug week breakdown
-                addDebugInfo(`Week ${currentWeek.number} milestones: ${thisWeekTotal} (${thisWeekCompleted} completed)`);
+                // Enhanced debug information
+                addDebugInfo(`=== Week ${currentWeek.number} Analysis ===`);
+                addDebugInfo(`Total milestones with Week Reference: ${allMilestones.filter(m => m.hasValidWeekReference).length}`);
+                addDebugInfo(`Week ${currentWeek.number} milestones (strict): ${thisWeekTotal}`);
+                addDebugInfo(`Week ${currentWeek.number} completed: ${thisWeekCompleted}`);
+                
+                // Debug: Show distribution of all milestones
                 const weekBreakdown = {};
+                const unmappedCount = allMilestones.filter(m => !m.hasValidWeekReference).length;
+                
                 for (let i = 1; i <= 12; i++) {
-                    const weekMilestones = allMilestones.filter(m => m.hasValidWeekReference && m.weekNumber === i);
+                    const weekMilestones = allMilestones.filter(m => 
+                        m.hasValidWeekReference === true && m.weekNumber === i
+                    );
                     if (weekMilestones.length > 0) {
                         weekBreakdown[`Week ${i}`] = weekMilestones.length;
                     }
                 }
-                addDebugInfo(`Milestones by week (with valid Week Reference): ${JSON.stringify(weekBreakdown)}`);
+                
+                addDebugInfo(`Milestone distribution by week: ${JSON.stringify(weekBreakdown)}`);
+                addDebugInfo(`Unmapped milestones (no Week Reference): ${unmappedCount}`);
                 
                 // Update overall stats
                 document.getElementById('totalMilestones').textContent = totalMilestones;
