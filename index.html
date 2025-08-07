@@ -1073,13 +1073,12 @@
             
             // Get task name
             const taskName = props.Task?.title?.[0]?.text?.content || 'Untitled';
-            const weekSelect = props.Week?.select?.name || 'No Week';
             
-            // Process Week Reference relation - this is the most reliable field
+            // Process Week Reference relation - this is the ONLY reliable field now
             const weekReferenceRelation = props['Week Reference']?.relation || [];
             const weekReferenceIds = weekReferenceRelation.map(ref => ref.id);
             
-            // Determine current week number based on Week Reference
+            // Determine current week number based on Week Reference ONLY
             let weekNumberFromReference = null;
             if (weekReferenceIds.length > 0) {
                 const firstReferenceId = weekReferenceIds[0];
@@ -1092,17 +1091,12 @@
                 }
             }
             
-            // Fallback to Week select field number
-            let weekNumberFromSelect = parseInt(weekSelect.replace('Week ', '') || '0');
-            
             return {
                 id: milestone.id,
                 task: taskName,
                 completed: props.Completed?.checkbox || false,
                 focusArea: props['Focus Area']?.select?.name || 'None',
-                week: weekSelect,
-                weekNumber: weekNumberFromSelect,
-                weekNumberFromReference: weekNumberFromReference, // Most reliable
+                weekNumberFromReference: weekNumberFromReference, // Only reliable source
                 weekReferenceIds: weekReferenceIds,
                 hasWeekReference: weekReferenceIds.length > 0,
                 deadlineType: props['Deadline Type']?.select?.name || 'Flexible',
@@ -1122,18 +1116,13 @@
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            // Get current week milestones for this focus area - using Week Reference IDs (PRIORITY)
-            const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
+            // Get current week milestones for this focus area - using Week Reference ONLY
             const thisWeek = focusMilestones.filter(m => {
-                // PRIMARY: Check if Week Reference matches current week (most reliable)
+                // PRIMARY: Check if Week Reference matches current week (ONLY reliable source)
                 if (m.weekNumberFromReference === currentWeek.number) return true;
-                if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
                 
-                // FALLBACK 1: Check if marked as current by Notion formula
+                // FALLBACK: Check if marked as current by Notion formula
                 if (m.isCurrent) return true;
-                
-                // FALLBACK 2: Week select field (less reliable due to inconsistencies)
-                if (m.week === `Week ${currentWeek.number}`) return true;
                 
                 return false;
             });
@@ -1156,19 +1145,14 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             
-            // Filter for current week milestones using Week Reference IDs (PRIORITY)
-            const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
+            // Filter for current week milestones using Week Reference ONLY
             const currentWeekMilestones = milestones
                 .filter(m => {
-                    // PRIMARY: Check Week Reference matches current week number
+                    // PRIMARY: Check Week Reference matches current week number (ONLY reliable source)
                     if (m.weekNumberFromReference === currentWeek.number) return true;
-                    if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
                     
-                    // FALLBACK 1: Check formula
+                    // FALLBACK: Check formula
                     if (m.isCurrent) return true;
-                    
-                    // FALLBACK 2: Week select (less reliable)
-                    if (m.weekNumber === currentWeek.number) return true;
                     
                     return false;
                 })
@@ -1219,12 +1203,8 @@
                 const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
                 const thisWeekMilestones = allMilestones.filter(m => {
-                    // PRIMARY: Check Week Reference matches current week number (most reliable)
+                    // PRIMARY: Check Week Reference matches current week number (ONLY reliable source)
                     if (m.weekNumberFromReference === currentWeek.number) return true;
-                    
-                    // SECONDARY: Check Week Reference IDs
-                    const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
-                    if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
                     
                     // FALLBACK 1: Check if marked as current by Notion formula
                     if (m.isCurrent) return true;
@@ -1234,9 +1214,6 @@
                         const dueDate = new Date(m.dueDate);
                         return dueDate >= currentWeek.start && dueDate <= currentWeek.end;
                     }
-                    
-                    // FALLBACK 3: Check week number (least reliable due to inconsistencies)
-                    if (m.weekNumber === currentWeek.number) return true;
                     
                     return false;
                 });
