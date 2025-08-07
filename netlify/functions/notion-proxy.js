@@ -39,20 +39,20 @@ exports.handler = async (event, context) => {
                 console.log('Querying milestones database:', milestonesDbId);
                 
                 // Week Reference IDs mapping
-                const WEEK_REFERENCE_IDS = {
-                    1: '2421495c-e9ab-80d9-a954-e11c828688a9',
-                    2: '2421495c-e9ab-80b5-88ed-d428e228d346',
-                    3: '2421495c-e9ab-8113-9acc-c6986f533743',
-                    4: '2421495c-e9ab-812d-9fdc-c85af2665b7c',
-                    5: '2421495c-e9ab-8130-9ac5-f6a074f3a17a',
-                    6: '2421495c-e9ab-813c-9cf3-eba5b4f5576c',
-                    7: 'YOUR_WEEK_7_REFERENCE_ID',
-                    8: 'YOUR_WEEK_8_REFERENCE_ID',
-                    9: '2421495c-e9ab-81bb-811e-f9aa61eb3a39',
-                    10: '2421495c-e9ab-81d8-9680-df3499e4a322',
-                    11: '2421495c-e9ab-81da-b521-dc78ce8d0a74',
-                    12: '2421495c-e9ab-81e3-8f42-c977be4ab77b'
-                };
+               const WEEK_REFERENCE_IDS = {
+    1: '2421495c-e9ab-80d9-a954-e11c828688a9',  // Week 1
+    2: '2421495c-e9ab-80b5-88ed-d428e228d346',  // Week 2
+    3: '2421495c-e9ab-8113-9acc-c6986f533743',  // Week 3
+    4: '2421495c-e9ab-812d-9fdc-c85af2665b7c',  // Week 4
+    5: '2421495c-e9ab-8130-9ac5-f6a074f3a17a',  // Week 5
+    6: '2421495c-e9ab-813c-9cf3-eba5b4f5576c',  // Week 6
+    7: '2421495c-e9ab-8151-bf39-c2d9ab1172c5',  // Week 7 ✅ FOUND
+    8: '2421495c-e9ab-81b2-98c5-da75b9d01791',  // Week 8 ✅ FOUND
+    9: '2421495c-e9ab-81bb-811e-f9aa61eb3a39',  // Week 9
+    10: '2421495c-e9ab-81d8-9680-df3499e4a322', // Week 10
+    11: '2421495c-e9ab-81da-b521-dc78ce8d0a74', // Week 11
+    12: '2421495c-e9ab-81e3-8f42-c977be4ab77b'  // Week 12
+};
                 
                 // Query milestones with all properties - NO SORTING since Week property is deleted
                 const milestonesResponse = await notion.databases.query({
