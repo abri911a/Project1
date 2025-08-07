@@ -849,6 +849,22 @@
         // 12 Week Year Start Date - Update this to your actual start date
         const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
         
+        // Week Reference IDs - UPDATE WITH YOUR ACTUAL WEEK REFERENCE IDs
+        const WEEK_REFERENCE_IDS = {
+            1: '2421495c-e9ab-80d9-a954-e11c828688a9', // Week 1 (from your knowledge file)
+            2: 'YOUR_WEEK_2_REFERENCE_ID',
+            3: 'YOUR_WEEK_3_REFERENCE_ID', 
+            4: 'YOUR_WEEK_4_REFERENCE_ID',
+            5: 'YOUR_WEEK_5_REFERENCE_ID',
+            6: 'YOUR_WEEK_6_REFERENCE_ID',
+            7: 'YOUR_WEEK_7_REFERENCE_ID',
+            8: 'YOUR_WEEK_8_REFERENCE_ID',
+            9: 'YOUR_WEEK_9_REFERENCE_ID',
+            10: 'YOUR_WEEK_10_REFERENCE_ID',
+            11: 'YOUR_WEEK_11_REFERENCE_ID',
+            12: 'YOUR_WEEK_12_REFERENCE_ID'
+        };
+        
         let isLoading = false;
         let debugData = [];
         let allMilestones = [];
@@ -1004,12 +1020,18 @@
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            // Get current week milestones for this focus area - simplified logic
+            // Get current week milestones for this focus area - using Week Reference IDs
+            const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
             const thisWeek = focusMilestones.filter(m => {
-                // Check if Week field matches current week
-                if (m.week === `Week ${currentWeek.number}`) return true;
-                if (m.weekNumber === currentWeek.number) return true;
+                // Primary: Check if any Week Reference ID matches current week
+                if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
+                
+                // Fallback: Check if marked as current by Notion formula
                 if (m.isCurrent) return true;
+                
+                // Fallback: Week select field (less reliable)
+                if (m.week === `Week ${currentWeek.number}`) return true;
+                
                 return false;
             });
             
@@ -1029,9 +1051,21 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             
-            // Filter for current week milestones
+            // Filter for current week milestones using Week Reference IDs
+            const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
             const currentWeekMilestones = milestones
-                .filter(m => m.weekNumber === currentWeek.number || m.isCurrent)
+                .filter(m => {
+                    // Primary: Check Week Reference IDs
+                    if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
+                    
+                    // Fallback: Check formula
+                    if (m.isCurrent) return true;
+                    
+                    // Fallback: Week select
+                    if (m.weekNumber === currentWeek.number) return true;
+                    
+                    return false;
+                })
                 .slice(0, 5); // Show max 5 milestones
             
             if (currentWeekMilestones.length === 0) {
@@ -1075,17 +1109,21 @@
                 const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
                 const thisWeekMilestones = allMilestones.filter(m => {
-                    // Method 1: Check week number
-                    if (m.weekNumber === currentWeek.number) return true;
+                    // PRIMARY: Check Week Reference IDs (most reliable)
+                    const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
+                    if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
                     
-                    // Method 2: Check if marked as current
+                    // FALLBACK 1: Check if marked as current by Notion formula
                     if (m.isCurrent) return true;
                     
-                    // Method 3: Check by due date
+                    // FALLBACK 2: Check by due date
                     if (m.dueDate) {
                         const dueDate = new Date(m.dueDate);
                         return dueDate >= currentWeek.start && dueDate <= currentWeek.end;
                     }
+                    
+                    // FALLBACK 3: Check week number (least reliable)
+                    if (m.weekNumber === currentWeek.number) return true;
                     
                     return false;
                 });
