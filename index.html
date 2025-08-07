@@ -38,9 +38,6 @@
             font-weight: 700;
             margin: 0 0 10px 0;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            background: linear-gradient(135deg, #fff, #f0f0f0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         .header .subtitle {
@@ -104,16 +101,6 @@
             font-weight: 600;
         }
 
-        .automation-btn:hover {
-            background: linear-gradient(135deg, #38a169, #2f855a) !important;
-        }
-
-        .automation-btn:disabled {
-            background: rgba(255,255,255,0.1) !important;
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
         .api-status {
             padding: 4px 12px;
             border-radius: 12px;
@@ -142,12 +129,6 @@
             margin-bottom: 20px;
         }
 
-        .week-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
         .current-week {
             font-size: 1.8rem;
             font-weight: 700;
@@ -167,57 +148,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .week-timeline {
-            position: relative;
-            height: 40px;
-            background: #e2e8f0;
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 15px;
-        }
-
-        .week-timeline-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            border-radius: 20px;
-            transition: width 1s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .week-timeline-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .week-markers {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 5px;
-        }
-
-        .week-marker {
-            font-size: 0.7rem;
-            color: #718096;
-            position: relative;
-        }
-
-        .week-marker.current {
-            color: #667eea;
-            font-weight: 600;
-        }
-
         /* Overall Stats */
         .overall-stats {
             display: grid;
@@ -233,8 +163,6 @@
             padding: 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            border-top: 3px solid transparent;
-            border-image: linear-gradient(90deg, #667eea, #764ba2) 1;
         }
 
         .stat-card:hover {
@@ -265,329 +193,6 @@
             font-size: 0.8rem;
             color: #a0aec0;
             margin-top: 5px;
-        }
-
-        /* Focus Area Cards */
-        .focus-areas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .focus-area-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .focus-area-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .focus-area-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-        }
-
-        .career::before { background: linear-gradient(90deg, #4299e1, #3182ce); }
-        .business::before { background: linear-gradient(90deg, #48bb78, #38a169); }
-        .health::before { background: linear-gradient(90deg, #f56565, #e53e3e); }
-        .personal::before { background: linear-gradient(90deg, #9f7aea, #805ad5); }
-
-        .focus-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .focus-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .focus-icon {
-            font-size: 1.8rem;
-        }
-
-        .focus-completion {
-            background: #f7fafc;
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .career .focus-completion { color: #3182ce; background: #ebf8ff; }
-        .business .focus-completion { color: #38a169; background: #f0fff4; }
-        .health .focus-completion { color: #e53e3e; background: #fed7d7; }
-        .personal .focus-completion { color: #805ad5; background: #faf5ff; }
-
-        .focus-metrics {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .focus-metric {
-            text-align: center;
-            padding: 15px 10px;
-            background: #f8fafc;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
-        }
-
-        .focus-metric:hover {
-            background: #edf2f7;
-            transform: translateY(-2px);
-        }
-
-        .focus-metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 4px;
-        }
-
-        .focus-metric-label {
-            font-size: 0.75rem;
-            color: #718096;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            font-weight: 500;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: #e2e8f0;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            border-radius: 5px;
-            transition: width 0.8s ease;
-            position: relative;
-        }
-
-        .career .progress-fill { background: linear-gradient(90deg, #4299e1, #3182ce); }
-        .business .progress-fill { background: linear-gradient(90deg, #48bb78, #38a169); }
-        .health .progress-fill { background: linear-gradient(90deg, #f56565, #e53e3e); }
-        .personal .progress-fill { background: linear-gradient(90deg, #9f7aea, #805ad5); }
-
-        /* Milestone List */
-        .milestone-list {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .milestone-list-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 10px;
-        }
-
-        .milestone-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 0;
-            font-size: 0.85rem;
-            color: #718096;
-        }
-
-        .milestone-checkbox {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #cbd5e0;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .milestone-item.completed .milestone-checkbox {
-            background: #48bb78;
-            border-color: #48bb78;
-        }
-
-        .milestone-item.completed .milestone-checkbox::after {
-            content: '✓';
-            color: white;
-            font-size: 0.7rem;
-        }
-
-        .milestone-item.completed .milestone-text {
-            text-decoration: line-through;
-            opacity: 0.6;
-        }
-
-        /* Fitness Integration Styles */
-        .fitness-integration {
-            margin: 20px 0;
-            padding: 20px 0;
-            border-top: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .command-box {
-            background: linear-gradient(135deg, #f0fff4, #c6f6d5);
-            border: 2px solid #48bb78;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .command-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #22543d;
-            margin-bottom: 8px;
-        }
-
-        .command-text {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #2f855a;
-            font-family: monospace;
-            background: rgba(255,255,255,0.7);
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin: 8px auto;
-            display: inline-block;
-        }
-
-        .command-desc {
-            font-size: 0.9rem;
-            color: #2f855a;
-            opacity: 0.8;
-        }
-
-        /* Live Fitness Metrics */
-        .fitness-live-metrics {
-            margin-top: 15px;
-        }
-
-        .fitness-metric-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .fitness-metric-card {
-            background: rgba(255,255,255,0.7);
-            border-radius: 12px;
-            padding: 12px;
-            border-left: 4px solid #48bb78;
-            transition: all 0.3s ease;
-        }
-
-        .fitness-metric-card:hover {
-            background: rgba(255,255,255,0.9);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .fitness-metric-card.weight {
-            border-left-color: #f56565;
-        }
-
-        .fitness-metric-card.workouts {
-            border-left-color: #48bb78;
-        }
-
-        .fitness-metric-card.intensity {
-            border-left-color: #ed8936;
-        }
-
-        .fitness-metric-card {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .metric-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .metric-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .metric-value {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #2d3748;
-            line-height: 1.2;
-        }
-
-        .metric-label {
-            font-size: 0.75rem;
-            color: #718096;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            margin: 2px 0;
-        }
-
-        .metric-progress {
-            font-size: 0.8rem;
-            color: #4a5568;
-            opacity: 0.8;
-        }
-
-        /* Fitness Status Bar */
-        .fitness-status-bar {
-            text-align: center;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .status-indicator.status-success {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .status-indicator.status-warning {
-            background: #fed7d7;
-            color: #744210;
-        }
-
-        .status-indicator.status-danger {
-            background: #fed7d7;
-            color: #c53030;
-        }
-
-        .status-indicator.status-info {
-            background: #bee3f8;
-            color: #2b6cb0;
         }
 
         .loading { color: #a0aec0; font-size: 0.9rem; }
@@ -624,6 +229,76 @@
             font-family: 'Courier New', monospace;
         }
 
+        /* Focus Areas */
+        .focus-areas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .focus-area-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .focus-area-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .career::before { background: linear-gradient(90deg, #4299e1, #3182ce); }
+        .business::before { background: linear-gradient(90deg, #48bb78, #38a169); }
+        .health::before { background: linear-gradient(90deg, #f56565, #e53e3e); }
+        .personal::before { background: linear-gradient(90deg, #9f7aea, #805ad5); }
+
+        .focus-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .focus-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .focus-metric {
+            text-align: center;
+            padding: 15px 10px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .focus-metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .focus-metric-label {
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-weight: 500;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .header h1 {
@@ -658,9 +333,6 @@
                 </div>
                 <span id="apiStatus" class="api-status status-loading">Connecting...</span>
                 <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
-                <button class="refresh-btn automation-btn" id="automationBtn" onclick="runAutomation()">
-                    <span>📅➡️📝 Convert Planned Tasks</span>
-                </button>
                 <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
                     <span>🔄 Refresh</span>
                 </button>
@@ -670,21 +342,11 @@
         <!-- Week Progress Bar -->
         <div class="week-progress-section">
             <div class="week-progress-header">
-                <div class="week-info">
+                <div>
                     <div class="current-week" id="currentWeek">Week 1 of 12</div>
                     <div class="week-dates" id="weekDates">Loading dates...</div>
                 </div>
                 <div class="week-progress-percentage" id="weekProgress">8.3%</div>
-            </div>
-            <div class="week-timeline">
-                <div class="week-timeline-fill" id="weekTimelineFill" style="width: 8.3%"></div>
-            </div>
-            <div class="week-markers">
-                <span class="week-marker">Week 1</span>
-                <span class="week-marker">Week 3</span>
-                <span class="week-marker">Week 6</span>
-                <span class="week-marker">Week 9</span>
-                <span class="week-marker">Week 12</span>
             </div>
         </div>
 
@@ -727,13 +389,7 @@
         <!-- Focus Area Cards -->
         <div class="focus-areas">
             <div class="focus-area-card career">
-                <div class="focus-header">
-                    <div class="focus-title">
-                        <span class="focus-icon">💼</span>
-                        <span>Career</span>
-                    </div>
-                    <div class="focus-completion" id="careerCompletion">0%</div>
-                </div>
+                <div class="focus-title">💼 Career</div>
                 <div class="focus-metrics">
                     <div class="focus-metric">
                         <div class="focus-metric-value" id="careerTotal">
@@ -754,20 +410,10 @@
                         <div class="focus-metric-label">This Week</div>
                     </div>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="careerProgress" style="width: 0%"></div>
-                </div>
-                <div class="milestone-list" id="careerMilestones"></div>
             </div>
 
             <div class="focus-area-card business">
-                <div class="focus-header">
-                    <div class="focus-title">
-                        <span class="focus-icon">🚀</span>
-                        <span>Business</span>
-                    </div>
-                    <div class="focus-completion" id="businessCompletion">0%</div>
-                </div>
+                <div class="focus-title">🚀 Business</div>
                 <div class="focus-metrics">
                     <div class="focus-metric">
                         <div class="focus-metric-value" id="businessTotal">
@@ -788,20 +434,10 @@
                         <div class="focus-metric-label">This Week</div>
                     </div>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="businessProgress" style="width: 0%"></div>
-                </div>
-                <div class="milestone-list" id="businessMilestones"></div>
             </div>
 
             <div class="focus-area-card health">
-                <div class="focus-header">
-                    <div class="focus-title">
-                        <span class="focus-icon">💪</span>
-                        <span>Health + Fitness</span>
-                    </div>
-                    <div class="focus-completion" id="healthCompletion">0%</div>
-                </div>
+                <div class="focus-title">💪 Health</div>
                 <div class="focus-metrics">
                     <div class="focus-metric">
                         <div class="focus-metric-value" id="healthTotal">
@@ -822,65 +458,10 @@
                         <div class="focus-metric-label">This Week</div>
                     </div>
                 </div>
-                
-                <!-- Fitness Integration Section -->
-                <div class="fitness-integration">
-                    <div class="command-box">
-                        <div class="command-title">💡 Get Latest Fitness Update</div>
-                        <div class="command-text">Say: "Update fitness dashboard"</div>
-                        <div class="command-desc">Claude will check Strava & update the data below</div>
-                    </div>
-                    
-                    <div class="fitness-live-metrics">
-                        <div class="fitness-metric-grid">
-                            <div class="fitness-metric-card weight">
-                                <div class="metric-icon">⚖️</div>
-                                <div class="metric-info">
-                                    <div class="metric-value" id="fitnessCurrentWeight">75.0kg</div>
-                                    <div class="metric-label">Current Weight</div>
-                                    <div class="metric-progress" id="fitnessWeightProgress">7.0kg to go</div>
-                                </div>
-                            </div>
-                            
-                            <div class="fitness-metric-card workouts">
-                                <div class="metric-icon">💪</div>
-                                <div class="metric-info">
-                                    <div class="metric-value" id="fitnessWorkoutsWeek">1/3</div>
-                                    <div class="metric-label">This Week</div>
-                                    <div class="metric-progress" id="fitnessConsistency">33% consistency</div>
-                                </div>
-                            </div>
-                            
-                            <div class="fitness-metric-card intensity">
-                                <div class="metric-icon">🔥</div>
-                                <div class="metric-info">
-                                    <div class="metric-value" id="fitnessAvgIntensity">-</div>
-                                    <div class="metric-label">Avg Intensity</div>
-                                    <div class="metric-progress">Target: 7+</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="fitness-status-bar" id="fitnessStatusBar">
-                            <div class="status-indicator status-warning">⚠️ Need 2 more workouts this week</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="progress-bar">
-                    <div class="progress-fill" id="healthProgress" style="width: 0%"></div>
-                </div>
-                <div class="milestone-list" id="healthMilestones"></div>
             </div>
 
             <div class="focus-area-card personal">
-                <div class="focus-header">
-                    <div class="focus-title">
-                        <span class="focus-icon">🌟</span>
-                        <span>Personal</span>
-                    </div>
-                    <div class="focus-completion" id="personalCompletion">0%</div>
-                </div>
+                <div class="focus-title">🌟 Personal</div>
                 <div class="focus-metrics">
                     <div class="focus-metric">
                         <div class="focus-metric-value" id="personalTotal">
@@ -901,10 +482,6 @@
                         <div class="focus-metric-label">This Week</div>
                     </div>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="personalProgress" style="width: 0%"></div>
-                </div>
-                <div class="milestone-list" id="personalMilestones"></div>
             </div>
         </div>
 
@@ -918,31 +495,26 @@
     </div>
 
     <script>
-        // Configuration - Replace with your actual token
+        // Configuration - Your actual working values
         const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP';
         const PROXY_URL = '/.netlify/functions/notion-proxy';
-        const AUTOMATION_URL = '/.netlify/functions/task-automation';
         const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
-        const WEEK_REFERENCE_DB_ID = '51b9b203-4232-4014-9407-1b8bd5e2c11b';
-        const FITNESS_DASHBOARD_DB_ID = '55615d1316a844b08432424441aa6f21';
         
-        // 12 Week Year Start Date - Update this to your actual start date
-        const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
+        // 12 Week Year Start Date
+        const TWELVE_WEEK_START = new Date('2025-08-04');
         
-        // Week Reference IDs - Actual IDs from your Notion workspace
+        // Week Reference IDs
         const WEEK_REFERENCE_IDS = {
-            1: '2421495c-e9ab-80d9-a954-e11c828688a9', // Week 1
-            2: '2421495c-e9ab-80b5-88ed-d428e228d346', // Week 2
-            3: '2421495c-e9ab-8113-9acc-c6986f533743', // Week 3
-            4: '2421495c-e9ab-812d-9fdc-c85af2665b7c', // Week 4
-            5: '2421495c-e9ab-8130-9ac5-f6a074f3a17a', // Week 5
-            6: '2421495c-e9ab-813c-9cf3-eba5b4f5576c', // Week 6
-            7: 'YOUR_WEEK_7_REFERENCE_ID', // Need to get Week 7-12 IDs
-            8: 'YOUR_WEEK_8_REFERENCE_ID',
-            9: '2421495c-e9ab-81bb-811e-f9aa61eb3a39', // Week 9
-            10: '2421495c-e9ab-81d8-9680-df3499e4a322', // Week 10
-            11: '2421495c-e9ab-81da-b521-dc78ce8d0a74', // Week 11
-            12: '2421495c-e9ab-81e3-8f42-c977be4ab77b'  // Week 12
+            1: '2421495c-e9ab-80d9-a954-e11c828688a9',
+            2: '2421495c-e9ab-80b5-88ed-d428e228d346',
+            3: '2421495c-e9ab-8113-9acc-c6986f533743',
+            4: '2421495c-e9ab-812d-9fdc-c85af2665b7c',
+            5: '2421495c-e9ab-8130-9ac5-f6a074f3a17a',
+            6: '2421495c-e9ab-813c-9cf3-eba5b4f5576c',
+            9: '2421495c-e9ab-81bb-811e-f9aa61eb3a39',
+            10: '2421495c-e9ab-81d8-9680-df3499e4a322',
+            11: '2421495c-e9ab-81da-b521-dc78ce8d0a74',
+            12: '2421495c-e9ab-81e3-8f42-c977be4ab77b'
         };
         
         let isLoading = false;
@@ -958,6 +530,7 @@
             if (debugContent) {
                 debugContent.innerHTML = debugData.join('<br>');
             }
+            console.log(`[DEBUG] ${timestamp}: ${message}`);
         }
 
         function toggleDebug() {
@@ -984,14 +557,10 @@
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
             
-            // Calculate actual progress through 12 weeks
-            const daysCompleted = Math.min(daysSinceStart, 84); // 84 days = 12 weeks
+            const daysCompleted = Math.min(daysSinceStart, 84);
             const actualProgress = ((daysCompleted / 84) * 100).toFixed(1);
             
-            addDebugInfo(`Current date: ${now.toDateString()}`);
-            addDebugInfo(`Days since start: ${daysSinceStart}`);
-            addDebugInfo(`Current week: ${weekNumber}`);
-            addDebugInfo(`Week dates: ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
+            addDebugInfo(`Current week: ${weekNumber}, progress: ${actualProgress}%`);
             
             return {
                 number: weekNumber,
@@ -1008,256 +577,59 @@
             document.getElementById('weekDates').textContent = 
                 `${week.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${week.end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
             document.getElementById('weekProgress').textContent = `${week.progress}%`;
-            document.getElementById('weekTimelineFill').style.width = `${week.progress}%`;
-            
-            // Update week markers
-            document.querySelectorAll('.week-marker').forEach((marker, index) => {
-                const markerWeek = [1, 3, 6, 9, 12][index];
-                if (markerWeek === week.number) {
-                    marker.classList.add('current');
-                } else {
-                    marker.classList.remove('current');
-                }
-            });
             
             return week;
         }
 
-      // Replace the fetchMilestones function in your dashboard with this:
+        async function fetchMilestones() {
+            addDebugInfo('Fetching milestones via Netlify proxy...');
+            
+            try {
+                const response = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: NOTION_TOKEN,
+                        database_id: MILESTONES_DB_ID,
+                        page_size: 100,
+                        sorts: [
+                            {
+                                property: 'Created',
+                                direction: 'descending'
+                            }
+                        ]
+                    })
+                });
 
-/ Replace the fetchMilestones function in your dashboard with this version:
+                addDebugInfo(`Response status: ${response.status}`);
 
-async function fetchMilestones() {
-    if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
-        throw new Error('Please configure your Notion integration token');
-    }
-
-    addDebugInfo('Fetching milestones via Netlify proxy...');
-    addDebugInfo(`Using Milestones DB ID: ${MILESTONES_DB_ID}`);
-
-    try {
-        // Use Netlify proxy function - REMOVED problematic sorts
-        const response = await fetch(PROXY_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                token: NOTION_TOKEN,
-                database_id: MILESTONES_DB_ID,
-                action: 'query',
-                page_size: 100,
-                // REMOVED: sorts that referenced deleted "Week" property
-                // Now using no sorting or sort by a property that exists
-                sorts: [
-                    {
-                        property: 'Created', // This property exists
-                        direction: 'descending'
-                    }
-                ]
-            })
-        });
-
-        addDebugInfo(`Proxy response status: ${response.status}`);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            addDebugInfo(`Proxy error response: ${errorText}`);
-            throw new Error(`Proxy Error: ${response.status} - ${errorText}`);
-        }
-
-        const data = await response.json();
-        addDebugInfo(`Fetched ${data.results?.length || 0} milestones via proxy`);
-        
-        return data.results || [];
-    } catch (error) {
-        addDebugInfo(`Error fetching milestones via proxy: ${error.message}`);
-        
-        // If network error, provide more specific debugging
-        if (error.message === 'Failed to fetch') {
-            addDebugInfo('Network error - checking if Netlify functions are deployed...');
-            addDebugInfo('Possible causes:');
-            addDebugInfo('1. Netlify functions not deployed');
-            addDebugInfo('2. Function URL incorrect');
-            addDebugInfo('3. CORS issues');
-            addDebugInfo(`Trying to reach: ${PROXY_URL}`);
-        }
-        
-        throw error;
-    }
-}
-
-// Also add this function to test if your Netlify functions are working:
-async function testNetlifyFunctions() {
-    addDebugInfo('Testing Netlify function availability...');
-    
-    try {
-        // Test basic connectivity to Netlify functions
-        const testResponse = await fetch('/.netlify/functions/notion-proxy', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                test: true
-            })
-        });
-        
-        addDebugInfo(`Test response status: ${testResponse.status}`);
-        
-        if (testResponse.status === 400) {
-            addDebugInfo('✅ Netlify function is responding (400 = missing token, but function exists)');
-        } else if (testResponse.status === 404) {
-            addDebugInfo('❌ Netlify function not found - needs to be deployed');
-        } else {
-            addDebugInfo(`Netlify function responded with: ${testResponse.status}`);
-        }
-        
-    } catch (error) {
-        addDebugInfo(`❌ Cannot reach Netlify functions: ${error.message}`);
-        addDebugInfo('This means your Netlify functions are not deployed or accessible');
-    }
-}
-
-// Update your updateMetrics function to include the test:
-async function updateMetrics() {
-    if (isLoading) return;
-    isLoading = true;
-
-    try {
-        updateApiStatus('loading');
-        addDebugInfo('Starting metrics update...');
-        
-        // First test if Netlify functions are working
-        await testNetlifyFunctions();
-        
-        // Update week progress
-        const currentWeek = updateWeekProgress();
-        
-        // Fetch milestones
-        const rawMilestones = await fetchMilestones();
-        allMilestones = rawMilestones.map(processMilestone);
-        
-        // ... rest of your existing updateMetrics code
-        
-    } catch (error) {
-        console.error('Error updating metrics:', error);
-        addDebugInfo(`Error: ${error.message}`);
-        updateApiStatus('error');
-    } finally {
-        isLoading = false;
-    }
-}
-
-// Also add this function for fitness data
-async function fetchFitnessData() {
-    try {
-        addDebugInfo('Fetching fitness data...');
-        
-        const response = await fetch(PROXY_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                token: NOTION_TOKEN,
-                database_id: FITNESS_DASHBOARD_DB_ID,
-                action: 'query',
-                filter: {
-                    property: "Dashboard Type",
-                    select: {
-                        equals: "Main"
-                    }
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Status ${response.status}: ${errorText}`);
                 }
-            })
-        });
 
-        if (!response.ok) {
-            addDebugInfo(`Fitness data fetch failed: ${response.status}`);
-            return null;
+                const data = await response.json();
+                addDebugInfo(`✅ Fetched ${data.results?.length || 0} milestones`);
+                
+                return data.results || [];
+            } catch (error) {
+                addDebugInfo(`❌ Error: ${error.message}`);
+                throw error;
+            }
         }
-
-        const data = await response.json();
-        const fitnessEntry = data.results?.[0];
-        
-        if (fitnessEntry) {
-            const props = fitnessEntry.properties;
-            return {
-                currentWeight: props['Current Weight']?.number || 75,
-                goalWeight: props['Goal Weight']?.number || 68,
-                startingWeight: props['Starting Weight']?.number || 75,
-                workoutsThisWeek: props['Workouts This Week']?.number || 0,
-                weekNumber: props['Week Number']?.number || 1,
-                lastUpdated: props['Last Updated']?.date?.start || new Date().toISOString()
-            };
-        }
-        
-        return null;
-    } catch (error) {
-        addDebugInfo(`Error fetching fitness data: ${error.message}`);
-        return null;
-    }
-}
-
-function updateFitnessMetrics(fitnessData) {
-    if (!fitnessData) {
-        addDebugInfo('No fitness data available, using defaults');
-        fitnessData = {
-            currentWeight: 75,
-            goalWeight: 68,
-            startingWeight: 75,
-            workoutsThisWeek: 0,
-            weekNumber: 1
-        };
-    }
-    
-    // Update weight display
-    const weightRemaining = fitnessData.currentWeight - fitnessData.goalWeight;
-    document.getElementById('fitnessCurrentWeight').textContent = `${fitnessData.currentWeight}kg`;
-    document.getElementById('fitnessWeightProgress').textContent = `${weightRemaining.toFixed(1)}kg to go`;
-    
-    // Update workouts
-    const workoutTarget = 3; // 3 workouts per week
-    const consistency = Math.round((fitnessData.workoutsThisWeek / workoutTarget) * 100);
-    document.getElementById('fitnessWorkoutsWeek').textContent = `${fitnessData.workoutsThisWeek}/${workoutTarget}`;
-    document.getElementById('fitnessConsistency').textContent = `${consistency}% consistency`;
-    
-    // Update status based on workouts
-    const statusBar = document.getElementById('fitnessStatusBar');
-    const statusIndicator = statusBar.querySelector('.status-indicator');
-    
-    if (fitnessData.workoutsThisWeek >= 3) {
-        statusIndicator.className = 'status-indicator status-success';
-        statusIndicator.textContent = '✅ Weekly workout goal achieved!';
-    } else if (fitnessData.workoutsThisWeek >= 2) {
-        statusIndicator.className = 'status-indicator status-warning';
-        statusIndicator.textContent = `⚠️ Need ${3 - fitnessData.workoutsThisWeek} more workout this week`;
-    } else if (fitnessData.workoutsThisWeek >= 1) {
-        statusIndicator.className = 'status-indicator status-warning';
-        statusIndicator.textContent = `⚠️ Need ${3 - fitnessData.workoutsThisWeek} more workouts this week`;
-    } else {
-        statusIndicator.className = 'status-indicator status-danger';
-        statusIndicator.textContent = '🚨 No workouts logged this week - start today!';
-    }
-    
-    addDebugInfo(`Fitness metrics updated: ${fitnessData.currentWeight}kg, ${fitnessData.workoutsThisWeek}/3 workouts`);
-}
 
         function processMilestone(milestone) {
             const props = milestone.properties;
             
-            // Get task name
             const taskName = props.Task?.title?.[0]?.text?.content || 'Untitled';
-            
-            // Process Week Reference relation - this is the ONLY reliable field now
             const weekReferenceRelation = props['Week Reference']?.relation || [];
             const weekReferenceIds = weekReferenceRelation.map(ref => ref.id);
             
-            // Determine current week number based on Week Reference ONLY
             let weekNumberFromReference = null;
             if (weekReferenceIds.length > 0) {
                 const firstReferenceId = weekReferenceIds[0];
-                // Find which week this reference ID corresponds to
                 for (const [weekNum, refId] of Object.entries(WEEK_REFERENCE_IDS)) {
                     if (refId === firstReferenceId) {
                         weekNumberFromReference = parseInt(weekNum);
@@ -1271,17 +643,9 @@ function updateFitnessMetrics(fitnessData) {
                 task: taskName,
                 completed: props.Completed?.checkbox || false,
                 focusArea: props['Focus Area']?.select?.name || 'None',
-                weekNumberFromReference: weekNumberFromReference, // Only reliable source
+                weekNumberFromReference: weekNumberFromReference,
                 weekReferenceIds: weekReferenceIds,
-                hasWeekReference: weekReferenceIds.length > 0,
-                deadlineType: props['Deadline Type']?.select?.name || 'Flexible',
-                dueDate: props['Due Date']?.date?.start || null,
-                weekStartDate: props['Week Start Date']?.date?.start || null,
-                notes: props.Notes?.rich_text?.[0]?.text?.content || '',
-                isCurrent: props['Is Current Week']?.formula?.boolean || 
-                          props['Is Current (Auto)']?.rollup?.array?.[0]?.checkbox || 
-                          false,
-                status: props.Status?.formula?.string || 'Not Started'
+                deadlineType: props['Deadline Type']?.select?.name || 'Flexible'
             };
         }
 
@@ -1289,68 +653,19 @@ function updateFitnessMetrics(fitnessData) {
             const focusMilestones = milestones.filter(m => m.focusArea === focusArea);
             const completed = focusMilestones.filter(m => m.completed).length;
             const total = focusMilestones.length;
-            const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            // Get current week milestones for this focus area - using Week Reference ONLY
-            const thisWeek = focusMilestones.filter(m => {
-                // PRIMARY: Check if Week Reference matches current week (ONLY reliable source)
-                if (m.weekNumberFromReference === currentWeek.number) return true;
-                
-                // FALLBACK: Check if marked as current by Notion formula
-                if (m.isCurrent) return true;
-                
-                return false;
-            });
+            const thisWeek = focusMilestones.filter(m => 
+                m.weekNumberFromReference === currentWeek.number
+            );
             
-            const thisWeekCompleted = thisWeek.filter(m => m.completed).length;
-            
-            addDebugInfo(`${focusArea}: ${thisWeek.length} milestones this week, ${thisWeekCompleted} completed`);
+            addDebugInfo(`${focusArea}: ${total} total, ${completed} completed, ${thisWeek.length} this week`);
             
             return {
                 total,
                 completed,
-                completionRate,
                 thisWeek: thisWeek.length,
-                thisWeekCompleted,
                 milestones: focusMilestones
             };
-        }
-
-        function renderMilestoneList(milestones, containerId, currentWeek) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            // Filter for current week milestones using Week Reference ONLY
-            const currentWeekMilestones = milestones
-                .filter(m => {
-                    // PRIMARY: Check Week Reference matches current week number (ONLY reliable source)
-                    if (m.weekNumberFromReference === currentWeek.number) return true;
-                    
-                    // FALLBACK: Check formula
-                    if (m.isCurrent) return true;
-                    
-                    return false;
-                })
-                .slice(0, 5); // Show max 5 milestones
-            
-            if (currentWeekMilestones.length === 0) {
-                container.innerHTML = '';
-                return;
-            }
-            
-            let html = '<div class="milestone-list-title">This Week\'s Milestones:</div>';
-            
-            currentWeekMilestones.forEach(milestone => {
-                const completedClass = milestone.completed ? 'completed' : '';
-                html += `
-                    <div class="milestone-item ${completedClass}">
-                        <div class="milestone-checkbox"></div>
-                        <div class="milestone-text">${milestone.task}</div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
         }
 
         async function updateMetrics() {
@@ -1361,93 +676,45 @@ function updateFitnessMetrics(fitnessData) {
                 updateApiStatus('loading');
                 addDebugInfo('Starting metrics update...');
                 
-                // Update week progress
                 const currentWeek = updateWeekProgress();
-                
-                // Fetch milestones
                 const rawMilestones = await fetchMilestones();
                 allMilestones = rawMilestones.map(processMilestone);
                 
-                // Fetch fitness data
-                const fitnessData = await fetchFitnessData();
-                updateFitnessMetrics(fitnessData);
-                
-                // Calculate overall metrics
                 const totalMilestones = allMilestones.length;
                 const completedMilestones = allMilestones.filter(m => m.completed).length;
                 const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
-                const thisWeekMilestones = allMilestones.filter(m => {
-                    // PRIMARY: Check Week Reference matches current week number (ONLY reliable source)
-                    if (m.weekNumberFromReference === currentWeek.number) return true;
-                    
-                    // FALLBACK 1: Check if marked as current by Notion formula
-                    if (m.isCurrent) return true;
-                    
-                    // FALLBACK 2: Check by due date
-                    if (m.dueDate) {
-                        const dueDate = new Date(m.dueDate);
-                        return dueDate >= currentWeek.start && dueDate <= currentWeek.end;
-                    }
-                    
-                    return false;
-                });
-                
-                const thisWeekTotal = thisWeekMilestones.length;
-                const thisWeekCompleted = thisWeekMilestones.filter(m => m.completed).length;
+                const thisWeekMilestones = allMilestones.filter(m => 
+                    m.weekNumberFromReference === currentWeek.number
+                ).length;
                 
                 // Update overall stats
                 document.getElementById('totalMilestones').textContent = totalMilestones;
                 document.getElementById('completedMilestones').textContent = completedMilestones;
                 document.getElementById('completionRate').textContent = `${completionRate}% completion rate`;
-                document.getElementById('thisWeekMilestones').textContent = thisWeekTotal;
-                document.getElementById('thisWeekSubtext').textContent = `Week ${currentWeek.number}: ${thisWeekCompleted}/${thisWeekTotal} completed`;
+                document.getElementById('thisWeekMilestones').textContent = thisWeekMilestones;
+                document.getElementById('thisWeekSubtext').textContent = `Week ${currentWeek.number} milestones`;
                 document.getElementById('criticalMilestones').textContent = criticalMilestones;
                 
-                // Calculate and update focus area metrics
+                // Update focus areas
                 const focusAreas = ['Career', 'Business', 'Health', 'Personal'];
                 
                 focusAreas.forEach(focusArea => {
                     const metrics = calculateFocusAreaMetrics(allMilestones, focusArea, currentWeek);
                     const prefix = focusArea.toLowerCase();
                     
-                    // Update values
                     document.getElementById(`${prefix}Total`).textContent = metrics.total;
                     document.getElementById(`${prefix}Completed`).textContent = metrics.completed;
                     document.getElementById(`${prefix}ThisWeek`).textContent = metrics.thisWeek;
-                    document.getElementById(`${prefix}Completion`).textContent = metrics.completionRate + '%';
-                    
-                    // Update progress bar
-                    document.getElementById(`${prefix}Progress`).style.width = metrics.completionRate + '%';
-                    
-                    // Render milestone list
-                    renderMilestoneList(metrics.milestones, `${prefix}Milestones`, currentWeek);
                 });
 
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 updateApiStatus('success');
-                addDebugInfo('All metrics updated successfully!');
+                addDebugInfo('✅ All metrics updated successfully!');
 
             } catch (error) {
                 console.error('Error updating metrics:', error);
-                addDebugInfo(`Error: ${error.message}`);
-                
-                // Show error in all fields
-                const errorElements = [
-                    'totalMilestones', 'completedMilestones', 'thisWeekMilestones', 'criticalMilestones',
-                    'careerTotal', 'careerCompleted', 'careerThisWeek',
-                    'businessTotal', 'businessCompleted', 'businessThisWeek',
-                    'healthTotal', 'healthCompleted', 'healthThisWeek',
-                    'personalTotal', 'personalCompleted', 'personalThisWeek'
-                ];
-                
-                errorElements.forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        element.innerHTML = '<span class="error">Error</span>';
-                    }
-                });
-                
+                addDebugInfo(`❌ Error: ${error.message}`);
                 updateApiStatus('error');
             } finally {
                 isLoading = false;
@@ -1474,125 +741,17 @@ function updateFitnessMetrics(fitnessData) {
 
         async function refreshData() {
             const btn = document.getElementById('refreshBtn');
-            const span = btn.querySelector('span');
-            
             btn.disabled = true;
-            span.style.transform = 'rotate(360deg)';
-            span.style.transition = 'transform 0.8s ease';
-            
             await updateMetrics();
-            
-            setTimeout(() => {
-                span.style.transform = 'rotate(0deg)';
-                btn.disabled = false;
-            }, 800);
+            setTimeout(() => { btn.disabled = false; }, 1000);
         }
 
-        async function runAutomation() {
-            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
-                addDebugInfo('Error: Please configure your Notion integration token');
-                alert('Please configure your Notion integration token first');
-                return;
-            }
-
-            const btn = document.getElementById('automationBtn');
-            const span = btn.querySelector('span');
-            const originalText = span.textContent;
-            
-            btn.disabled = true;
-            span.textContent = '⏳ Converting Tasks...';
-            
-            addDebugInfo('Starting task automation...');
-            addDebugInfo('Converting planned tasks to milestones...');
-
-            try {
-                const response = await fetch(AUTOMATION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        token: NOTION_TOKEN
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                    throw new Error(`Automation failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
-                }
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    const { summary } = result;
-                    addDebugInfo(`✅ Automation completed successfully!`);
-                    addDebugInfo(`📊 Summary: ${summary.tasksProcessed} planned tasks processed`);
-                    addDebugInfo(`✨ Created: ${summary.milestonesCreated} milestones`);
-                    addDebugInfo(`🔗 Linked: ${summary.tasksLinked} tasks (now in progress)`);
-                    
-                    let message = `Task Conversion Complete! 🎉\n\n`;
-                    message += `📊 Processed: ${summary.tasksProcessed} planned tasks\n`;
-                    message += `✨ Created: ${summary.milestonesCreated} milestones\n`;
-                    message += `🔗 Updated: ${summary.tasksLinked} tasks to "In Progress"\n`;
-                    
-                    if (summary.errors > 0) {
-                        message += `⚠️ Errors: ${summary.errors} tasks had issues\n`;
-                        addDebugInfo(`⚠️ ${summary.errors} errors occurred during processing`);
-                    }
-                    
-                    message += `\nRefreshing dashboard...`;
-                    
-                    alert(message);
-                    
-                    // Auto-refresh the dashboard to show updated data
-                    setTimeout(() => {
-                        updateMetrics();
-                    }, 1000);
-                    
-                } else {
-                    addDebugInfo(`❌ Automation failed: ${result.error}`);
-                    alert(`Automation failed: ${result.message || result.error}`);
-                }
-
-            } catch (error) {
-                console.error('Automation error:', error);
-                addDebugInfo(`❌ Automation error: ${error.message}`);
-                alert(`Automation error: ${error.message}`);
-            } finally {
-                btn.disabled = false;
-                span.textContent = originalText;
-            }
-        }
-
-        // Initial load
-        addDebugInfo('12 Week Year Dashboard initialized');
+        // Initialize
+        addDebugInfo('Dashboard initialized - starting first update...');
         updateMetrics();
 
         // Auto-refresh every 2 minutes
         setInterval(updateMetrics, 120000);
-
-        // Add subtle animations to cards
-        document.querySelectorAll('.focus-area-card, .stat-card').forEach((card, index) => {
-            card.style.animationDelay = `${index * 0.1}s`;
-            card.style.animation = 'fadeInUp 0.6s ease forwards';
-            card.style.opacity = '0';
-        });
-
-        // Add fadeInUp animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>
