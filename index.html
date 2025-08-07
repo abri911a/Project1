@@ -845,24 +845,25 @@
         const PROXY_URL = '/.netlify/functions/notion-proxy';
         const AUTOMATION_URL = '/.netlify/functions/task-automation';
         const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
+        const WEEK_REFERENCE_DB_ID = '51b9b203-4232-4014-9407-1b8bd5e2c11b';
         
         // 12 Week Year Start Date - Update this to your actual start date
         const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
         
-        // Week Reference IDs - UPDATE WITH YOUR ACTUAL WEEK REFERENCE IDs
+        // Week Reference IDs - Actual IDs from your Notion workspace
         const WEEK_REFERENCE_IDS = {
-            1: '2421495c-e9ab-80d9-a954-e11c828688a9', // Week 1 (from your knowledge file)
-            2: 'YOUR_WEEK_2_REFERENCE_ID',
-            3: 'YOUR_WEEK_3_REFERENCE_ID', 
-            4: 'YOUR_WEEK_4_REFERENCE_ID',
-            5: 'YOUR_WEEK_5_REFERENCE_ID',
-            6: 'YOUR_WEEK_6_REFERENCE_ID',
-            7: 'YOUR_WEEK_7_REFERENCE_ID',
+            1: '2421495c-e9ab-80d9-a954-e11c828688a9', // Week 1
+            2: '2421495c-e9ab-80b5-88ed-d428e228d346', // Week 2
+            3: '2421495c-e9ab-8113-9acc-c6986f533743', // Week 3
+            4: '2421495c-e9ab-812d-9fdc-c85af2665b7c', // Week 4
+            5: '2421495c-e9ab-8130-9ac5-f6a074f3a17a', // Week 5
+            6: '2421495c-e9ab-813c-9cf3-eba5b4f5576c', // Week 6
+            7: 'YOUR_WEEK_7_REFERENCE_ID', // Need to get Week 7-12 IDs
             8: 'YOUR_WEEK_8_REFERENCE_ID',
-            9: 'YOUR_WEEK_9_REFERENCE_ID',
-            10: 'YOUR_WEEK_10_REFERENCE_ID',
-            11: 'YOUR_WEEK_11_REFERENCE_ID',
-            12: 'YOUR_WEEK_12_REFERENCE_ID'
+            9: '2421495c-e9ab-81bb-811e-f9aa61eb3a39', // Week 9
+            10: '2421495c-e9ab-81d8-9680-df3499e4a322', // Week 10
+            11: '2421495c-e9ab-81da-b521-dc78ce8d0a74', // Week 11
+            12: '2421495c-e9ab-81e3-8f42-c977be4ab77b'  // Week 12
         };
         
         let isLoading = false;
@@ -983,16 +984,29 @@
         function processMilestone(milestone) {
             const props = milestone.properties;
             
-            // Debug log to see what we're getting
+            // Get task name
             const taskName = props.Task?.title?.[0]?.text?.content || 'Untitled';
             const weekSelect = props.Week?.select?.name || 'No Week';
-            const weekReferences = props['Week Reference']?.relation || [];
             
-            // Extract week number from Week Reference if available
-            let inferredWeekNumber = parseInt(weekSelect.replace('Week ', '') || '0');
+            // Process Week Reference relation - this is the most reliable field
+            const weekReferenceRelation = props['Week Reference']?.relation || [];
+            const weekReferenceIds = weekReferenceRelation.map(ref => ref.id);
             
-            // If we have a Week Reference, we can trust that more than the Week select field
-            const hasWeekReference = weekReferences.length > 0;
+            // Determine current week number based on Week Reference
+            let weekNumberFromReference = null;
+            if (weekReferenceIds.length > 0) {
+                const firstReferenceId = weekReferenceIds[0];
+                // Find which week this reference ID corresponds to
+                for (const [weekNum, refId] of Object.entries(WEEK_REFERENCE_IDS)) {
+                    if (refId === firstReferenceId) {
+                        weekNumberFromReference = parseInt(weekNum);
+                        break;
+                    }
+                }
+            }
+            
+            // Fallback to Week select field number
+            let weekNumberFromSelect = parseInt(weekSelect.replace('Week ', '') || '0');
             
             return {
                 id: milestone.id,
@@ -1000,9 +1014,10 @@
                 completed: props.Completed?.checkbox || false,
                 focusArea: props['Focus Area']?.select?.name || 'None',
                 week: weekSelect,
-                weekNumber: inferredWeekNumber,
-                hasWeekReference: hasWeekReference,
-                weekReferenceIds: weekReferences.map(ref => ref.id),
+                weekNumber: weekNumberFromSelect,
+                weekNumberFromReference: weekNumberFromReference, // Most reliable
+                weekReferenceIds: weekReferenceIds,
+                hasWeekReference: weekReferenceIds.length > 0,
                 deadlineType: props['Deadline Type']?.select?.name || 'Flexible',
                 dueDate: props['Due Date']?.date?.start || null,
                 weekStartDate: props['Week Start Date']?.date?.start || null,
@@ -1020,22 +1035,25 @@
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            // Get current week milestones for this focus area - using Week Reference IDs
+            // Get current week milestones for this focus area - using Week Reference IDs (PRIORITY)
             const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
             const thisWeek = focusMilestones.filter(m => {
-                // Primary: Check if any Week Reference ID matches current week
+                // PRIMARY: Check if Week Reference matches current week (most reliable)
+                if (m.weekNumberFromReference === currentWeek.number) return true;
                 if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
                 
-                // Fallback: Check if marked as current by Notion formula
+                // FALLBACK 1: Check if marked as current by Notion formula
                 if (m.isCurrent) return true;
                 
-                // Fallback: Week select field (less reliable)
+                // FALLBACK 2: Week select field (less reliable due to inconsistencies)
                 if (m.week === `Week ${currentWeek.number}`) return true;
                 
                 return false;
             });
             
             const thisWeekCompleted = thisWeek.filter(m => m.completed).length;
+            
+            addDebugInfo(`${focusArea}: ${thisWeek.length} milestones this week, ${thisWeekCompleted} completed`);
             
             return {
                 total,
@@ -1051,17 +1069,18 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             
-            // Filter for current week milestones using Week Reference IDs
+            // Filter for current week milestones using Week Reference IDs (PRIORITY)
             const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
             const currentWeekMilestones = milestones
                 .filter(m => {
-                    // Primary: Check Week Reference IDs
+                    // PRIMARY: Check Week Reference matches current week number
+                    if (m.weekNumberFromReference === currentWeek.number) return true;
                     if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
                     
-                    // Fallback: Check formula
+                    // FALLBACK 1: Check formula
                     if (m.isCurrent) return true;
                     
-                    // Fallback: Week select
+                    // FALLBACK 2: Week select (less reliable)
                     if (m.weekNumber === currentWeek.number) return true;
                     
                     return false;
@@ -1109,7 +1128,10 @@
                 const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
                 const thisWeekMilestones = allMilestones.filter(m => {
-                    // PRIMARY: Check Week Reference IDs (most reliable)
+                    // PRIMARY: Check Week Reference matches current week number (most reliable)
+                    if (m.weekNumberFromReference === currentWeek.number) return true;
+                    
+                    // SECONDARY: Check Week Reference IDs
                     const currentWeekReferenceId = WEEK_REFERENCE_IDS[currentWeek.number];
                     if (m.weekReferenceIds && m.weekReferenceIds.includes(currentWeekReferenceId)) return true;
                     
@@ -1122,7 +1144,7 @@
                         return dueDate >= currentWeek.start && dueDate <= currentWeek.end;
                     }
                     
-                    // FALLBACK 3: Check week number (least reliable)
+                    // FALLBACK 3: Check week number (least reliable due to inconsistencies)
                     if (m.weekNumber === currentWeek.number) return true;
                     
                     return false;
