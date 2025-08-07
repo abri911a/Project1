@@ -21,6 +21,21 @@ width: 100%;
     width: 45px;
     height: 45px;
 }
+#weekSyncBtn {
+    background: linear-gradient(135deg, #9f7aea, #805ad5) !important;
+    border: none;
+    font-weight: 600;
+}
+
+#weekSyncBtn:hover {
+    background: linear-gradient(135deg, #805ad5, #6b46c1) !important;
+}
+
+#weekSyncBtn:disabled {
+    background: rgba(255,255,255,0.1) !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 .logo{
     height: 32px;
     display: flex;
