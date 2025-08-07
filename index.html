@@ -1259,23 +1259,29 @@
 const totalMilestones = allMilestones.length;
 const completedMilestones = allMilestones.filter(m => m.completed).length;
 
-// Calculate THIS WEEK's completion rate
-const thisWeekMilestones = allMilestones.filter(m => 
+// Calculate THIS WEEK's milestones (rename variable to avoid conflict)
+const currentWeekMilestones = allMilestones.filter(m => 
     m.weekNumberFromReference === currentWeek.number
 );
-const thisWeekCompleted = thisWeekMilestones.filter(m => m.completed).length;
-const thisWeekTotal = thisWeekMilestones.length;
-const thisWeekCompletionRate = thisWeekTotal > 0 ? Math.round((thisWeekCompleted / thisWeekTotal) * 100) : 0;
+const currentWeekCompleted = currentWeekMilestones.filter(m => m.completed).length;
+const currentWeekTotal = currentWeekMilestones.length;
+const currentWeekCompletionRate = currentWeekTotal > 0 ? Math.round((currentWeekCompleted / currentWeekTotal) * 100) : 0;
 
-// Update the display elements:
+const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
+
+// Update display elements
 document.getElementById('totalMilestones').textContent = totalMilestones;
-document.getElementById('completedMilestones').textContent = `${thisWeekCompleted}/${thisWeekTotal}`; // Show current week fraction
-document.getElementById('completionRate').textContent = `${thisWeekCompletionRate}% this week`; // Show current week rate
-document.getElementById('thisWeekMilestones').textContent = thisWeekTotal;
-document.getElementById('thisWeekSubtext').textContent = `${thisWeekCompleted} of ${thisWeekTotal} completed`;
+document.getElementById('completedMilestones').textContent = `${currentWeekCompleted}/${currentWeekTotal}`;
+document.getElementById('completionRate').textContent = `${currentWeekCompletionRate}% this week`;
+document.getElementById('thisWeekMilestones').textContent = currentWeekTotal;
+document.getElementById('thisWeekSubtext').textContent = `${currentWeekCompleted} of ${currentWeekTotal} completed`;
+document.getElementById('criticalMilestones').textContent = criticalMilestones;
 
-// Also update the debug info:
-addDebugInfo(`Week ${currentWeek.number}: ${thisWeekCompleted}/${thisWeekTotal} completed (${thisWeekCompletionRate}%)`);
+// Debug info
+addDebugInfo(`Week ${currentWeek.number}: ${currentWeekCompleted}/${currentWeekTotal} completed (${currentWeekCompletionRate}%)`);
+
+// IMPORTANT: Make sure you don't have another "thisWeekMilestones" variable declared elsewhere in the function
+// If you do, remove it or rename one of them
 
 // If you want to also show overall completion somewhere, you can add:
 const overallCompletionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
