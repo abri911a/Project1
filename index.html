@@ -658,7 +658,6 @@
                 </div>
                 <span id="apiStatus" class="api-status status-loading">Connecting...</span>
                 <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
-                <button class="debug-toggle" onclick="enableTestMode()" style="background: #f56565;">Test Mode</button>
                 <button class="refresh-btn automation-btn" id="automationBtn" onclick="runAutomation()">
                     <span>📅➡️📝 Convert Planned Tasks</span>
                 </button>
@@ -949,7 +948,6 @@
         let isLoading = false;
         let debugData = [];
         let allMilestones = [];
-        let testMode = false; // Set to true for testing without proxy
 
         function addDebugInfo(message) {
             const timestamp = new Date().toLocaleTimeString();
@@ -959,9 +957,7 @@
             const debugContent = document.getElementById('debugContent');
             if (debugContent) {
                 debugContent.innerHTML = debugData.join('<br>');
-                debugContent.scrollTop = debugContent.scrollHeight;
             }
-            console.log(message);
         }
 
         function toggleDebug() {
@@ -975,65 +971,6 @@
                 debugInfo.style.display = 'none';
                 toggleBtn.textContent = 'Debug';
             }
-        }
-
-        function createMockMilestones() {
-            // Create mock milestones for testing
-            const mockMilestones = [
-                {
-                    id: 'mock-1',
-                    properties: {
-                        Task: { title: [{ text: { content: 'Complete project proposal' } }] },
-                        Completed: { checkbox: true },
-                        'Focus Area': { select: { name: 'Career' } },
-                        'Week Reference': { relation: [{ id: WEEK_REFERENCE_IDS[1] }] },
-                        'Deadline Type': { select: { name: 'Critical (Fixed)' } },
-                        'Due Date': { date: { start: '2025-08-07' } },
-                        Notes: { rich_text: [{ text: { content: 'Important project milestone' } }] }
-                    }
-                },
-                {
-                    id: 'mock-2',
-                    properties: {
-                        Task: { title: [{ text: { content: 'Weekly workout routine' } }] },
-                        Completed: { checkbox: false },
-                        'Focus Area': { select: { name: 'Health' } },
-                        'Week Reference': { relation: [{ id: WEEK_REFERENCE_IDS[1] }] },
-                        'Deadline Type': { select: { name: 'Target' } },
-                        Notes: { rich_text: [{ text: { content: '3 sessions planned' } }] }
-                    }
-                },
-                {
-                    id: 'mock-3',
-                    properties: {
-                        Task: { title: [{ text: { content: 'Business plan review' } }] },
-                        Completed: { checkbox: false },
-                        'Focus Area': { select: { name: 'Business' } },
-                        'Week Reference': { relation: [{ id: WEEK_REFERENCE_IDS[1] }] },
-                        'Deadline Type': { select: { name: 'Flexible' } },
-                        Notes: { rich_text: [{ text: { content: 'Quarterly review' } }] }
-                    }
-                }
-            ];
-            
-            return mockMilestones;
-        }
-
-        function createMockFitnessData() {
-            return {
-                currentWeight: 75.0,
-                goalWeight: 68,
-                startingWeight: 75,
-                workoutsThisWeek: 1,
-                avgIntensity: 8.0,
-                totalVolumeThisWeek: 45,
-                lastWorkout: '2025-08-06',
-                lastWeightUpdate: '2025-08-07',
-                weekNumber: 1,
-                actionRequired: false,
-                notes: 'Mock fitness data for testing',
-                weeklyNotes: 'Week 1 progress'
-            };
         }
 
         function calculateCurrentWeek() {
@@ -1241,12 +1178,6 @@
             container.innerHTML = html;
         }
 
-        function enableTestMode() {
-            testMode = true;
-            addDebugInfo('🧪 Test mode enabled - using mock data');
-            updateMetrics();
-        }
-
         async function updateMetrics() {
             if (isLoading) return;
             isLoading = true;
@@ -1258,22 +1189,13 @@
                 // Update week progress
                 const currentWeek = updateWeekProgress();
                 
-                if (testMode) {
-                    addDebugInfo('Using mock data in test mode');
-                    // Use mock data
-                    const mockMilestones = createMockMilestones();
-                    allMilestones = mockMilestones.map(processMilestone);
-                    
-                    const mockFitnessData = createMockFitnessData();
-                    updateFitnessMetrics(mockFitnessData);
-                } else {
-                    // Fetch real data
-                    const rawMilestones = await fetchMilestones();
-                    allMilestones = rawMilestones.map(processMilestone);
-                    
-                    const fitnessData = await fetchFitnessData();
-                    updateFitnessMetrics(fitnessData);
-                }
+                // Fetch milestones
+                const rawMilestones = await fetchMilestones();
+                allMilestones = rawMilestones.map(processMilestone);
+                
+                // Fetch fitness data
+                const fitnessData = await fetchFitnessData();
+                updateFitnessMetrics(fitnessData);
                 
                 // Calculate overall metrics
                 const totalMilestones = allMilestones.length;
