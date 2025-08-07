@@ -335,58 +335,21 @@
 
         .career .focus-completion { color: #3182ce; background: #ebf8ff; }
         .business .focus-completion { color: #38a169; background: #f0fff4; }
-        .health .focus-completion { color: #e53e3e; background: #fed7d7; }
+        .health .focus-completion { color: #e53e3e; background: #fff5f5; }
         .personal .focus-completion { color: #805ad5; background: #faf5ff; }
 
-        .focus-metrics {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .focus-metric {
-            text-align: center;
-            padding: 15px 10px;
-            background: #f8fafc;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
-        }
-
-        .focus-metric:hover {
-            background: #edf2f7;
-            transform: translateY(-2px);
-        }
-
-        .focus-metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 4px;
-        }
-
-        .focus-metric-label {
-            font-size: 0.75rem;
-            color: #718096;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            font-weight: 500;
-        }
-
         .progress-bar {
-            width: 100%;
             height: 10px;
             background: #e2e8f0;
             border-radius: 5px;
             overflow: hidden;
-            margin-top: 20px;
+            margin-bottom: 15px;
         }
 
         .progress-fill {
             height: 100%;
-            border-radius: 5px;
-            transition: width 0.8s ease;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.5s ease;
             position: relative;
         }
 
@@ -395,34 +358,44 @@
         .health .progress-fill { background: linear-gradient(90deg, #f56565, #e53e3e); }
         .personal .progress-fill { background: linear-gradient(90deg, #9f7aea, #805ad5); }
 
-        /* Milestone List */
-        .milestone-list {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
+        .progress-text {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 15px;
         }
 
-        .milestone-list-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 10px;
+        .milestone-list {
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 5px;
         }
 
         .milestone-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 0;
-            font-size: 0.85rem;
-            color: #718096;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            background: #f7fafc;
+            transition: all 0.2s;
+        }
+
+        .milestone-item:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .milestone-item.completed {
+            opacity: 0.7;
+            text-decoration: line-through;
         }
 
         .milestone-checkbox {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #cbd5e0;
+            width: 18px;
+            height: 18px;
             border-radius: 4px;
+            border: 2px solid #cbd5e0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -432,829 +405,1242 @@
         .milestone-item.completed .milestone-checkbox {
             background: #48bb78;
             border-color: #48bb78;
-        }
-
-        .milestone-item.completed .milestone-checkbox::after {
-            content: '✓';
             color: white;
-            font-size: 0.7rem;
         }
 
-        .milestone-item.completed .milestone-text {
-            text-decoration: line-through;
-            opacity: 0.6;
-        }
-
-        .loading { color: #a0aec0; font-size: 0.9rem; }
-        .error { color: #e53e3e; font-size: 0.9rem; }
-
-        .update-time {
-            text-align: center;
-            color: rgba(255,255,255,0.8);
+        .milestone-text {
             font-size: 0.85rem;
-            margin-top: 30px;
-        }
-
-        .debug-toggle {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .debug-info {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 20px;
-            font-size: 0.75rem;
             color: #4a5568;
-            max-height: 300px;
-            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Enhanced Health Section Styles */
+        .health-enhanced {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: visible;
+        }
+
+        .health-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f56565, #e53e3e);
+        }
+
+        .health-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .health-status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-on-track { background: #c6f6d5; color: #22543d; }
+        .status-warning { background: #fed7aa; color: #7c2d12; }
+        .status-behind { background: #fed7d7; color: #742a2a; }
+
+        .fitness-quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .fitness-stat {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 3px solid #f56565;
+        }
+
+        .fitness-stat-label {
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .fitness-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .fitness-stat-target {
+            font-size: 0.7rem;
+            color: #a0aec0;
+            margin-top: 2px;
+        }
+
+        .workout-week-tracker {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .workout-week-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .workout-days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .workout-day {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 5px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .workout-day.completed {
+            background: rgba(255, 255, 255, 0.9);
+            color: #e53e3e;
+        }
+
+        .workout-day.today {
+            border: 2px solid white;
+        }
+
+        .fitness-action-alert {
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .fitness-action-alert h4 {
+            color: #7c2d12;
+            margin: 0 0 4px 0;
+            font-size: 0.9rem;
+        }
+
+        .fitness-action-alert p {
+            color: #92400e;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        .update-fitness-btn {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .update-fitness-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .update-fitness-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* This Week Section */
+        .this-week-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .this-week-header {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .area-milestones {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .area-milestone-card {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 3px solid #667eea;
+        }
+
+        .area-milestone-title {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* Debug Panel */
+        .debug-panel {
+            background: #2d3748;
+            color: #cbd5e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
             display: none;
             font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        .debug-panel.active {
+            display: block;
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .debug-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .debug-content {
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .debug-section {
+            margin-bottom: 15px;
+        }
+
+        .debug-label {
+            color: #90cdf4;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .debug-value {
+            color: #a0aec0;
+            margin-left: 10px;
+        }
+
+        /* Automation Result */
+        .automation-result {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 350px;
+            transform: translateY(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .automation-result.show {
+            transform: translateY(0);
+        }
+
+        .automation-result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .automation-result-content {
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .automation-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #718096;
+            cursor: pointer;
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            border: 3px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            .dashboard {
+                padding: 10px;
+            }
+
             .header h1 {
                 font-size: 2rem;
             }
-            
-            .week-progress-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
+
             .overall-stats {
                 grid-template-columns: 1fr;
             }
-            
+
             .focus-areas {
                 grid-template-columns: 1fr;
             }
+
+            .area-milestones {
+                grid-template-columns: 1fr;
+            }
+
+            .header-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .refresh-btn, .automation-btn {
+                width: 100%;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
 </head>
 <body>
     <div class="dashboard">
+        <!-- Header -->
         <div class="header">
-            <h1>🎯 12 Week Year Progress Dashboard</h1>
-            <p class="subtitle">"Achieve more in 12 weeks than most do in 12 months"</p>
+            <h1>🎯 12 Week Year Progress</h1>
+            <div class="subtitle">Transform Goals into Reality • Week <span id="current-week-number">1</span> of 12</div>
+            
             <div class="header-controls">
                 <div class="live-indicator">
                     <div class="live-dot"></div>
-                    <span>Live Metrics</span>
+                    <span>Live Dashboard</span>
                 </div>
-                <span id="apiStatus" class="api-status status-loading">Connecting...</span>
-                <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
-                <button class="refresh-btn automation-btn" id="automationBtn" onclick="runAutomation()">
-                    <span>📅➡️📝 Convert Planned Tasks</span>
+                
+                <button class="refresh-btn" onclick="refreshData()">
+                    🔄 Refresh Data
                 </button>
-                <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
-                    <span>🔄 Refresh</span>
+                
+                <button class="refresh-btn automation-btn" onclick="runAutomation()">
+                    🚀 Convert Planned Tasks
                 </button>
+                
+                <button class="refresh-btn" onclick="toggleDebug()">
+                    🐛 Debug Mode
+                </button>
+                
+                <div class="api-status status-success" id="api-status">
+                    API Connected
+                </div>
             </div>
         </div>
 
-        <!-- Week Progress Bar -->
+        <!-- Week Progress Section -->
         <div class="week-progress-section">
             <div class="week-progress-header">
                 <div class="week-info">
-                    <div class="current-week" id="currentWeek">Week 1 of 12</div>
-                    <div class="week-dates" id="weekDates">Loading dates...</div>
+                    <div class="current-week">Week <span id="week-number">1</span></div>
+                    <div class="week-dates" id="week-dates">Aug 4 - Aug 10, 2025</div>
                 </div>
-                <div class="week-progress-percentage" id="weekProgress">8.3%</div>
+                <div class="week-progress-percentage" id="week-percentage">0%</div>
             </div>
+            
             <div class="week-timeline">
-                <div class="week-timeline-fill" id="weekTimelineFill" style="width: 8.3%"></div>
+                <div class="week-timeline-fill" id="week-timeline-fill" style="width: 0%"></div>
             </div>
+            
             <div class="week-markers">
-                <span class="week-marker">Week 1</span>
-                <span class="week-marker">Week 3</span>
-                <span class="week-marker">Week 6</span>
-                <span class="week-marker">Week 9</span>
-                <span class="week-marker">Week 12</span>
+                <div class="week-marker">Week 1</div>
+                <div class="week-marker">Week 3</div>
+                <div class="week-marker">Week 6</div>
+                <div class="week-marker">Week 9</div>
+                <div class="week-marker">Week 12</div>
             </div>
         </div>
 
         <!-- Overall Stats -->
         <div class="overall-stats">
             <div class="stat-card">
-                <div class="stat-icon">📋</div>
-                <div class="stat-value" id="totalMilestones">
-                    <span class="loading">...</span>
-                </div>
+                <div class="stat-icon">📊</div>
+                <div class="stat-value" id="overall-progress">0/100</div>
                 <div class="stat-label">Total Milestones</div>
-                <div class="stat-subtext" id="totalMilestonesSubtext">Across all 12 weeks</div>
+                <div class="stat-subtext"><span id="overall-percentage">0</span>% Complete</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-value" id="completedMilestones">
-                    <span class="loading">...</span>
-                </div>
-                <div class="stat-label">Week Progress</div>
-                <div class="stat-subtext" id="completionRate">0% completion rate</div>
-            </div>
+            
             <div class="stat-card">
                 <div class="stat-icon">🎯</div>
-                <div class="stat-value" id="thisWeekMilestones">
-                    <span class="loading">...</span>
-                </div>
+                <div class="stat-value" id="week-milestones">0/25</div>
                 <div class="stat-label">This Week</div>
-                <div class="stat-subtext" id="thisWeekSubtext">Due in current week</div>
+                <div class="stat-subtext">Focus on current week</div>
             </div>
+            
             <div class="stat-card">
                 <div class="stat-icon">🔥</div>
-                <div class="stat-value" id="criticalMilestones">
-                    <span class="loading">...</span>
-                </div>
-                <div class="stat-label">Critical Tasks</div>
-                <div class="stat-subtext">Fixed deadlines</div>
+                <div class="stat-value" id="completion-rate">0%</div>
+                <div class="stat-label">Completion Rate</div>
+                <div class="stat-subtext">Overall performance</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⏰</div>
+                <div class="stat-value" id="days-remaining">84</div>
+                <div class="stat-label">Days Remaining</div>
+                <div class="stat-subtext">Until Week 12 ends</div>
             </div>
         </div>
 
-        <!-- Focus Area Cards -->
+        <!-- Focus Areas -->
         <div class="focus-areas">
+            <!-- Career -->
             <div class="focus-area-card career">
                 <div class="focus-header">
                     <div class="focus-title">
                         <span class="focus-icon">💼</span>
                         <span>Career</span>
                     </div>
-                    <div class="focus-completion" id="careerCompletion">0%</div>
-                </div>
-                <div class="focus-metrics">
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="careerTotal">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">Total</div>
-                    </div>
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="careerCompleted">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">Done</div>
-                    </div>
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="careerThisWeek">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">This Week</div>
+                    <div class="focus-completion">
+                        <span id="career-completed">0</span>/<span id="career-total">25</span>
                     </div>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" id="careerProgress" style="width: 0%"></div>
+                    <div class="progress-fill" id="career-progress" style="width: 0%"></div>
                 </div>
-                <div class="milestone-list" id="careerMilestones"></div>
+                <div class="progress-text">
+                    <span id="career-percentage">0</span>% Complete • 
+                    <span id="career-remaining">25</span> tasks remaining
+                </div>
+                <div class="milestone-list" id="career-milestones">
+                    <!-- Milestones will be populated here -->
+                </div>
             </div>
 
+            <!-- Business -->
             <div class="focus-area-card business">
                 <div class="focus-header">
                     <div class="focus-title">
                         <span class="focus-icon">🚀</span>
                         <span>Business</span>
                     </div>
-                    <div class="focus-completion" id="businessCompletion">0%</div>
-                </div>
-                <div class="focus-metrics">
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="businessTotal">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">Total</div>
-                    </div>
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="businessCompleted">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">Done</div>
-                    </div>
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="businessThisWeek">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">This Week</div>
+                    <div class="focus-completion">
+                        <span id="business-completed">0</span>/<span id="business-total">25</span>
                     </div>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" id="businessProgress" style="width: 0%"></div>
+                    <div class="progress-fill" id="business-progress" style="width: 0%"></div>
                 </div>
-                <div class="milestone-list" id="businessMilestones"></div>
+                <div class="progress-text">
+                    <span id="business-percentage">0</span>% Complete • 
+                    <span id="business-remaining">25</span> tasks remaining
+                </div>
+                <div class="milestone-list" id="business-milestones">
+                    <!-- Milestones will be populated here -->
+                </div>
             </div>
 
-            <div class="focus-area-card health">
-                <div class="focus-header">
-                    <div class="focus-title">
-                        <span class="focus-icon">💪</span>
-                        <span>Health</span>
-                    </div>
-                    <div class="focus-completion" id="healthCompletion">0%</div>
-                </div>
-                <div class="focus-metrics">
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="healthTotal">
-                            <span class="loading">...</span>
+            <!-- Enhanced Health Section -->
+            <div class="focus-area-card health health-enhanced">
+                <!-- Main Health Header -->
+                <div class="health-header-row">
+                    <div class="focus-header">
+                        <div class="focus-title">
+                            <span class="focus-icon">🏃</span>
+                            <span>Health & Fitness</span>
                         </div>
-                        <div class="focus-metric-label">Total</div>
-                    </div>
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="healthCompleted">
-                            <span class="loading">...</span>
+                        <div class="focus-completion health">
+                            <span id="health-completed">0</span>/<span id="health-total">25</span>
                         </div>
-                        <div class="focus-metric-label">Done</div>
                     </div>
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="healthThisWeek">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">This Week</div>
+                    <div class="health-status-badge status-on-track" id="fitness-status">
+                        ✅ On Track
                     </div>
                 </div>
+
+                <!-- Progress Bar -->
                 <div class="progress-bar">
-                    <div class="progress-fill" id="healthProgress" style="width: 0%"></div>
+                    <div class="progress-fill" id="health-progress" style="width: 0%"></div>
                 </div>
-                <div class="milestone-list" id="healthMilestones"></div>
+                <div class="progress-text">
+                    <span id="health-percentage">0</span>% Complete • 
+                    <span id="health-remaining">25</span> tasks remaining
+                </div>
+
+                <!-- Fitness Action Alerts -->
+                <div id="fitness-alerts" style="margin-top: 20px;"></div>
+
+                <!-- Weekly Workout Tracker -->
+                <div class="workout-week-tracker">
+                    <div class="workout-week-header">
+                        <div>
+                            <div style="font-weight: 700; font-size: 1.1rem;">This Week's Workouts</div>
+                            <div style="opacity: 0.9; font-size: 0.85rem; margin-top: 4px;">
+                                <span id="workouts-completed">0</span> of 3 completed • 
+                                <span id="consistency-percent">0</span>% consistency
+                            </div>
+                        </div>
+                        <button class="update-fitness-btn" onclick="updateFitnessMetrics()">
+                            Update Fitness
+                        </button>
+                    </div>
+                    <div class="workout-days-grid">
+                        <div class="workout-day" data-day="Mon">
+                            <div>MON</div>
+                            <div id="mon-status">-</div>
+                        </div>
+                        <div class="workout-day" data-day="Tue">
+                            <div>TUE</div>
+                            <div id="tue-status">-</div>
+                        </div>
+                        <div class="workout-day" data-day="Wed">
+                            <div>WED</div>
+                            <div id="wed-status">-</div>
+                        </div>
+                        <div class="workout-day" data-day="Thu">
+                            <div>THU</div>
+                            <div id="thu-status">-</div>
+                        </div>
+                        <div class="workout-day" data-day="Fri">
+                            <div>FRI</div>
+                            <div id="fri-status">-</div>
+                        </div>
+                        <div class="workout-day" data-day="Sat">
+                            <div>SAT</div>
+                            <div id="sat-status">-</div>
+                        </div>
+                        <div class="workout-day" data-day="Sun">
+                            <div>SUN</div>
+                            <div id="sun-status">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fitness Quick Stats -->
+                <div class="fitness-quick-stats">
+                    <div class="fitness-stat">
+                        <div class="fitness-stat-label">Current Weight</div>
+                        <div class="fitness-stat-value" id="current-weight">75.0kg</div>
+                        <div class="fitness-stat-target">Target: 68kg</div>
+                    </div>
+                    <div class="fitness-stat">
+                        <div class="fitness-stat-label">Weight Loss Rate</div>
+                        <div class="fitness-stat-value" id="weight-loss-rate">0kg/w</div>
+                        <div class="fitness-stat-target">Target: 0.58kg/w</div>
+                    </div>
+                    <div class="fitness-stat">
+                        <div class="fitness-stat-label">Avg Intensity</div>
+                        <div class="fitness-stat-value" id="avg-intensity">0</div>
+                        <div class="fitness-stat-target">Target: 7+</div>
+                    </div>
+                    <div class="fitness-stat">
+                        <div class="fitness-stat-label">Days Since Workout</div>
+                        <div class="fitness-stat-value" id="days-since-workout">0</div>
+                        <div class="fitness-stat-target">Max: 3 days</div>
+                    </div>
+                </div>
+
+                <!-- Health Milestones -->
+                <div class="milestone-list" id="health-milestones" style="margin-top: 20px;">
+                    <!-- Health milestones will be populated here -->
+                </div>
             </div>
 
+            <!-- Personal -->
             <div class="focus-area-card personal">
                 <div class="focus-header">
                     <div class="focus-title">
-                        <span class="focus-icon">🌟</span>
+                        <span class="focus-icon">🎯</span>
                         <span>Personal</span>
                     </div>
-                    <div class="focus-completion" id="personalCompletion">0%</div>
-                </div>
-                <div class="focus-metrics">
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="personalTotal">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">Total</div>
-                    </div>
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="personalCompleted">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">Done</div>
-                    </div>
-                    <div class="focus-metric">
-                        <div class="focus-metric-value" id="personalThisWeek">
-                            <span class="loading">...</span>
-                        </div>
-                        <div class="focus-metric-label">This Week</div>
+                    <div class="focus-completion">
+                        <span id="personal-completed">0</span>/<span id="personal-total">25</span>
                     </div>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" id="personalProgress" style="width: 0%"></div>
+                    <div class="progress-fill" id="personal-progress" style="width: 0%"></div>
                 </div>
-                <div class="milestone-list" id="personalMilestones"></div>
+                <div class="progress-text">
+                    <span id="personal-percentage">0</span>% Complete • 
+                    <span id="personal-remaining">25</span> tasks remaining
+                </div>
+                <div class="milestone-list" id="personal-milestones">
+                    <!-- Milestones will be populated here -->
+                </div>
             </div>
         </div>
 
-        <div class="update-time">
-            🔄 Auto-updated every 2 minutes • Last updated: <span id="lastUpdate">Never</span>
+        <!-- This Week Section -->
+        <div class="this-week-section">
+            <div class="this-week-header">
+                <span>📌</span>
+                <span>This Week's Focus</span>
+            </div>
+            <div class="area-milestones" id="this-week-milestones">
+                <!-- This week's milestones by area will be populated here -->
+            </div>
         </div>
 
-        <div class="debug-info" id="debugInfo">
-            <div id="debugContent">No debug data yet...</div>
+        <!-- Debug Panel -->
+        <div class="debug-panel" id="debug-panel">
+            <div class="debug-header">
+                <div class="debug-title">🐛 Debug Information</div>
+                <button class="refresh-btn" onclick="toggleDebug()">Close</button>
+            </div>
+            <div class="debug-content">
+                <div class="debug-section">
+                    <div class="debug-label">Current Week:</div>
+                    <div class="debug-value" id="debug-week">Loading...</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">API Status:</div>
+                    <div class="debug-value" id="debug-api">Loading...</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">Total Milestones:</div>
+                    <div class="debug-value" id="debug-total">Loading...</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">Week Reference ID:</div>
+                    <div class="debug-value" id="debug-week-ref">Loading...</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">Last Update:</div>
+                    <div class="debug-value" id="debug-update">Loading...</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">Raw Data:</div>
+                    <div class="debug-value" id="debug-raw" style="white-space: pre-wrap;">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Automation Result Popup -->
+        <div class="automation-result" id="automation-result">
+            <button class="automation-close" onclick="closeAutomationResult()">×</button>
+            <div class="automation-result-header">
+                <span id="automation-icon">✅</span>
+                <span id="automation-title">Automation Complete</span>
+            </div>
+            <div class="automation-result-content" id="automation-content">
+                <!-- Results will be populated here -->
+            </div>
         </div>
     </div>
 
     <script>
-        // Configuration - Replace with your actual token
-        const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP';
-        const PROXY_URL = '/.netlify/functions/notion-proxy';
-        const AUTOMATION_URL = '/.netlify/functions/task-automation';
+        // Configuration - UPDATE THESE WITH YOUR ACTUAL VALUES
+        const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP'; // Replace with your actual Notion token
         const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
+        const FITNESS_DB_ID = '8c32353f47a74b7b8318df4d60c20772';
+        const WEEKLY_SUMMARIES_DB_ID = '64f89cdaf6a84aa2837dc2b1fdc58240';
         
-        // 12 Week Year Start Date - Update this to your actual start date
-        const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
-        
-        // Map Week Reference IDs to Week Numbers
-        // IMPORTANT: Only the Weekly Scorecard entry IDs should be here
-        const WEEK_REFERENCE_MAP = {
-            // Week 1 Scorecard - confirmed to have 27 milestones
-            '2421495c-e9ab-80d9-a954-e11c828688a9': 1,  // Week 1 Scorecard (27 milestones)
-            
-            // Other week scorecards discovered from debug
-            '2421495c-e9ab-812d-9fdc-c85af2665b7c': 2,  // Week 2
-            '2421495c-e9ab-8130-9ac5-f6a074f3a17a': 3,  // Week 3
-            '2421495c-e9ab-81d8-9680-df3499e4a322': 3,  // Week 3 (alt)
-            '2421495c-e9ab-81da-b521-dc78ce8d0a74': 6,  // Week 6
-            '2421495c-e9ab-813c-9cf3-eba5b4f5576c': 6,  // Week 6 (alt)
-            '2421495c-e9ab-8151-bf39-c2d9ab1172c5': 7,  // Week 7
-            '2421495c-e9ab-81b2-98c5-da75b9d01791': 8,  // Week 8
-            '2421495c-e9ab-81bb-811e-f9aa61eb3a39': 9,  // Week 9
-            '2421495c-e9ab-81e3-8f42-c977be4ab77b': 10, // Week 10
-            '2421495c-e9ab-81e38f42-c977be4ab77b': 11,  // Week 11
-            
-            // Week pages from search results (might be needed)
-            '2421495c-e9ab-8105-8a5d-fdc58ca483fb': 1,  // Alternative Week 1 page
-            '2421495c-e9ab-81be-9b76-c6a1105f7f29': 2,  // Week 2 - Aug 11-17
-            '2421495c-e9ab-81b6-8ec5-fb68d89ad153': 3,  // Week 3 - Aug 18-24
-            '2421495c-e9ab-8194-9bbc-c60146c2b950': 4,  // Week 4 - Aug 25-31
-            '2421495c-e9ab-815d-93ff-dd6e162a08d1': 5,  // Week 5 - Sep 1-7
+        // Week Reference IDs - UPDATE THESE WITH YOUR ACTUAL IDS
+        const WEEK_REFERENCE_IDS = {
+            1: '2421495c-e9ab-80d9-a954-e11c828688a9',
+            2: 'YOUR_WEEK_2_REFERENCE_ID', // Replace with actual ID
+            3: 'YOUR_WEEK_3_REFERENCE_ID', // Replace with actual ID
+            4: 'YOUR_WEEK_4_REFERENCE_ID', // Replace with actual ID
+            5: 'YOUR_WEEK_5_REFERENCE_ID', // Replace with actual ID
+            6: 'YOUR_WEEK_6_REFERENCE_ID', // Replace with actual ID
+            7: 'YOUR_WEEK_7_REFERENCE_ID', // Replace with actual ID
+            8: 'YOUR_WEEK_8_REFERENCE_ID', // Replace with actual ID
+            9: 'YOUR_WEEK_9_REFERENCE_ID', // Replace with actual ID
+            10: 'YOUR_WEEK_10_REFERENCE_ID', // Replace with actual ID
+            11: 'YOUR_WEEK_11_REFERENCE_ID', // Replace with actual ID
+            12: 'YOUR_WEEK_12_REFERENCE_ID' // Replace with actual ID
         };
-        
-        // These IDs are NOT scorecard entries and should be ignored
-        const IGNORE_AUTO_MAPPING = [
-            '2421495c-e9ab-80b5-88ed-d428e228d346', // Not a scorecard (17 milestones)
-            '2421495c-e9ab-8113-9acc-c6986f533743', // Not a scorecard (11 milestones)
-            // Don't ignore the main Week 1 reference anymore
-        ];
-        
-        let isLoading = false;
-        let debugData = [];
-        let allMilestones = [];
 
-        function addDebugInfo(message) {
-            const timestamp = new Date().toLocaleTimeString();
-            debugData.push(`${timestamp}: ${message}`);
-            if (debugData.length > 100) debugData.shift();
+        // Global state
+        let currentWeek = { number: 1, startDate: null, endDate: null };
+        let milestonesData = [];
+        let debugMode = false;
+        let fitnessData = {
+            workoutsCompleted: 0,
+            consistency: 0,
+            currentWeight: 75.0,
+            weightLossRate: 0,
+            avgIntensity: 0,
+            daysSinceWorkout: 0,
+            workoutDays: [],
+            weeklyDuration: 0,
+            weeklyCalories: 0
+        };
+
+        // Initialize dashboard
+        async function initDashboard() {
+            console.log('Initializing dashboard...');
+            calculateCurrentWeek();
+            await loadData();
             
-            const debugContent = document.getElementById('debugContent');
-            if (debugContent) {
-                debugContent.innerHTML = debugData.join('<br>');
-            }
+            // Set up auto-refresh every 2 minutes
+            setInterval(loadData, 120000);
         }
 
-        function toggleDebug() {
-            const debugInfo = document.getElementById('debugInfo');
-            const toggleBtn = document.querySelector('.debug-toggle');
-            
-            if (debugInfo.style.display === 'none' || !debugInfo.style.display) {
-                debugInfo.style.display = 'block';
-                toggleBtn.textContent = 'Hide Debug';
-            } else {
-                debugInfo.style.display = 'none';
-                toggleBtn.textContent = 'Debug';
-            }
-        }
-
+        // Calculate current week based on start date
         function calculateCurrentWeek() {
-            const now = new Date();
-            const daysSinceStart = Math.floor((now - TWELVE_WEEK_START) / (1000 * 60 * 60 * 24));
-            const weekNumber = Math.min(Math.max(Math.floor(daysSinceStart / 7) + 1, 1), 12);
+            const startDate = new Date('2025-08-04'); // 12 Week Year start date
+            const today = new Date();
+            const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+            const weekNumber = Math.min(12, Math.max(1, Math.floor(daysDiff / 7) + 1));
             
-            const weekStart = new Date(TWELVE_WEEK_START);
-            weekStart.setDate(weekStart.getDate() + (weekNumber - 1) * 7);
+            currentWeek.number = weekNumber;
+            currentWeek.startDate = new Date(startDate);
+            currentWeek.startDate.setDate(startDate.getDate() + (weekNumber - 1) * 7);
+            currentWeek.endDate = new Date(currentWeek.startDate);
+            currentWeek.endDate.setDate(currentWeek.startDate.getDate() + 6);
             
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
+            // Update UI
+            document.getElementById('current-week-number').textContent = weekNumber;
+            document.getElementById('week-number').textContent = weekNumber;
+            document.getElementById('week-dates').textContent = formatDateRange(currentWeek.startDate, currentWeek.endDate);
             
-            // Calculate actual progress through 12 weeks
-            const daysCompleted = Math.min(daysSinceStart, 84); // 84 days = 12 weeks
-            const actualProgress = ((daysCompleted / 84) * 100).toFixed(1);
+            // Update days remaining
+            const endDate = new Date('2025-10-27'); // 12 Week Year end date
+            const daysRemaining = Math.max(0, Math.floor((endDate - today) / (1000 * 60 * 60 * 24)));
+            document.getElementById('days-remaining').textContent = daysRemaining;
             
-            addDebugInfo(`Current date: ${now.toDateString()}`);
-            addDebugInfo(`Days since start: ${daysSinceStart}`);
-            addDebugInfo(`Current week: ${weekNumber}`);
-            addDebugInfo(`Week dates: ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
+            // Update week timeline
+            const weekProgress = ((weekNumber - 1) / 11) * 100;
+            document.getElementById('week-timeline-fill').style.width = `${weekProgress}%`;
             
-            return {
-                number: weekNumber,
-                start: weekStart,
-                end: weekEnd,
-                progress: actualProgress
-            };
-        }
-
-        function updateWeekProgress() {
-            const week = calculateCurrentWeek();
-            
-            document.getElementById('currentWeek').textContent = `Week ${week.number} of 12`;
-            document.getElementById('weekDates').textContent = 
-                `${week.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${week.end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-            document.getElementById('weekProgress').textContent = `${week.progress}%`;
-            document.getElementById('weekTimelineFill').style.width = `${week.progress}%`;
-            
-            // Update week markers
-            document.querySelectorAll('.week-marker').forEach((marker, index) => {
-                const markerWeek = [1, 3, 6, 9, 12][index];
-                if (markerWeek === week.number) {
-                    marker.classList.add('current');
-                } else {
-                    marker.classList.remove('current');
-                }
-            });
-            
-            return week;
-        }
-
-        async function fetchMilestones() {
-            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
-                throw new Error('Please configure your Notion integration token');
+            // Update debug info
+            if (debugMode) {
+                document.getElementById('debug-week').textContent = `Week ${weekNumber}`;
+                document.getElementById('debug-week-ref').textContent = WEEK_REFERENCE_IDS[weekNumber] || 'Not configured';
             }
+        }
 
-            addDebugInfo('Fetching milestones from Notion...');
-            addDebugInfo(`Using Milestones DB ID: ${MILESTONES_DB_ID}`);
+        // Format date range
+        function formatDateRange(start, end) {
+            const options = { month: 'short', day: 'numeric' };
+            return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}, ${end.getFullYear()}`;
+        }
 
+        // Load all data
+        async function loadData() {
+            console.log('Loading data...');
+            updateApiStatus('loading');
+            
             try {
-                const response = await fetch(PROXY_URL, {
+                await Promise.all([
+                    loadMilestones(),
+                    loadFitnessData()
+                ]);
+                updateApiStatus('success');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                updateApiStatus('error');
+            }
+        }
+
+        // Load milestones from Notion
+        async function loadMilestones() {
+            try {
+                const response = await fetch('/.netlify/functions/notion-proxy', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         token: NOTION_TOKEN,
-                        milestonesDbId: MILESTONES_DB_ID
+                        database_id: MILESTONES_DB_ID,
+                        sorts: [
+                            { property: 'Week', direction: 'ascending' },
+                            { property: 'Focus Area', direction: 'ascending' }
+                        ]
                     })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                    addDebugInfo(`Proxy response status: ${response.status}`);
-                    addDebugInfo(`Proxy error details: ${JSON.stringify(errorData)}`);
-                    throw new Error(`Proxy Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
-                }
-
+                if (!response.ok) throw new Error('Failed to fetch milestones');
+                
                 const data = await response.json();
-                const results = data.results || [];
-                addDebugInfo(`Fetched ${results.length} milestones from Notion`);
+                milestonesData = data.milestones || [];
+                updateMetrics(milestonesData);
+                updateDebugInfo();
                 
-                // Debug: Check for milestones with Week 1 in their Week field
-                const week1BySelect = results.filter(m => 
-                    m.properties?.Week?.select?.name === 'Week 1'
-                ).length;
-                addDebugInfo(`Milestones with "Week 1" in Week select field: ${week1BySelect}`);
-                
-                return results;
             } catch (error) {
-                addDebugInfo(`Error fetching milestones: ${error.message}`);
-                throw error;
+                console.error('Error loading milestones:', error);
+                showError('Failed to load milestones. Check your configuration.');
             }
         }
 
-        function processMilestone(milestone) {
-            const props = milestone.properties;
-            
-            // Get basic properties
-            const taskName = props.Task?.title?.[0]?.text?.content || 'Untitled';
-            const weekSelect = props.Week?.select?.name || 'No Week';
-            const weekReferences = props['Week Reference']?.relation || [];
-            
-            // Determine week number STRICTLY from Week Reference only
-            let weekNumber = null; // Use null to indicate no valid week
-            let hasValidWeekReference = false;
-            
-            // Only assign a week number if there's a Week Reference relation
-            if (weekReferences && weekReferences.length > 0) {
-                const refId = weekReferences[0].id;
-                
-                // Check if this ID should be ignored (not a scorecard)
-                if (IGNORE_AUTO_MAPPING.includes(refId)) {
-                    // This is not a valid scorecard reference, ignore it
-                    addDebugInfo(`Ignoring non-scorecard reference: ${refId.substring(0, 8)}... for "${taskName.substring(0, 30)}..."`);
-                } else if (WEEK_REFERENCE_MAP[refId]) {
-                    // This is a known scorecard reference
-                    weekNumber = WEEK_REFERENCE_MAP[refId];
-                    hasValidWeekReference = true;
-                } else if (weekSelect && weekSelect.startsWith('Week ')) {
-                    // Unknown reference - log it for investigation
-                    const extractedWeek = parseInt(weekSelect.replace('Week ', '').trim());
-                    addDebugInfo(`Unknown Week Reference found: ${refId} for Week ${extractedWeek} - "${taskName.substring(0, 30)}..."`);
-                    // Don't auto-map unknown references
-                }
-            }
-            
-            return {
-                id: milestone.id,
-                task: taskName,
-                completed: props.Completed?.checkbox || false,
-                focusArea: props['Focus Area']?.select?.name || 'None',
-                week: weekSelect,
-                weekNumber: weekNumber,
-                hasValidWeekReference: hasValidWeekReference,
-                weekReferenceIds: weekReferences.map(ref => ref.id),
-                deadlineType: props['Deadline Type']?.select?.name || 'Flexible',
-                dueDate: props['Due Date']?.date?.start || null,
-                weekStartDate: props['Week Start Date']?.date?.start || null,
-                notes: props.Notes?.rich_text?.[0]?.text?.content || '',
-                isCurrent: props['Is Current Week']?.formula?.boolean || 
-                          props['Is Current (Auto)']?.rollup?.array?.[0]?.checkbox || 
-                          false,
-                status: props.Status?.formula?.string || 'Not Started'
-            };
-        }
-
-        function calculateFocusAreaMetrics(milestones, focusArea, currentWeek) {
-            const focusMilestones = milestones.filter(m => m.focusArea === focusArea);
-            const completed = focusMilestones.filter(m => m.completed).length;
-            const total = focusMilestones.length;
-            const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-            
-            // Current week milestones - STRICT Week Reference only
-            const thisWeek = focusMilestones.filter(m => {
-                return m.hasValidWeekReference === true && m.weekNumber === currentWeek.number;
-            });
-            
-            const thisWeekCompleted = thisWeek.filter(m => m.completed).length;
-            
-            return {
-                total,
-                completed,
-                completionRate,
-                thisWeek: thisWeek.length,
-                thisWeekCompleted,
-                milestones: focusMilestones
-            };
-        }
-
-        function renderMilestoneList(milestones, containerId, currentWeek) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            // Filter for current week milestones - STRICT Week Reference only
-            const currentWeekMilestones = milestones
-                .filter(m => m.hasValidWeekReference === true && m.weekNumber === currentWeek.number)
-                .slice(0, 5); // Show max 5 milestones
-            
-            if (currentWeekMilestones.length === 0) {
-                container.innerHTML = '';
-                return;
-            }
-            
-            let html = '<div class="milestone-list-title">This Week\'s Milestones:</div>';
-            
-            currentWeekMilestones.forEach(milestone => {
-                const completedClass = milestone.completed ? 'completed' : '';
-                html += `
-                    <div class="milestone-item ${completedClass}">
-                        <div class="milestone-checkbox"></div>
-                        <div class="milestone-text">${milestone.task}</div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-
-        async function updateMetrics() {
-            if (isLoading) return;
-            isLoading = true;
-
+        // Load fitness data
+        async function loadFitnessData() {
             try {
-                updateApiStatus('loading');
-                addDebugInfo('Starting metrics update...');
-                
-                // Update week progress
-                const currentWeek = updateWeekProgress();
-                
-                // Fetch milestones
-                const rawMilestones = await fetchMilestones();
-                allMilestones = rawMilestones.map(processMilestone);
-                
-                // Debug: Log week reference mappings discovered
-                addDebugInfo(`Week Reference mappings discovered: ${Object.keys(WEEK_REFERENCE_MAP).length}`);
-                
-                // Calculate overall metrics
-                const totalMilestones = allMilestones.length;
-                const totalCompletedMilestones = allMilestones.filter(m => m.completed).length;
-                const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
-                
-                // Calculate this week's milestones - STRICT Week Reference only
-                const thisWeekMilestones = allMilestones.filter(m => {
-                    // Must have a valid Week Reference AND match current week number
-                    return m.hasValidWeekReference === true && m.weekNumber === currentWeek.number;
-                });
-                
-                const thisWeekTotal = thisWeekMilestones.length;
-                const thisWeekCompleted = thisWeekMilestones.filter(m => m.completed).length;
-                
-                // Enhanced debug information
-                addDebugInfo(`=== Week ${currentWeek.number} Analysis ===`);
-                addDebugInfo(`Total milestones with Week Reference: ${allMilestones.filter(m => m.hasValidWeekReference).length}`);
-                addDebugInfo(`Week ${currentWeek.number} milestones (strict): ${thisWeekTotal}`);
-                addDebugInfo(`Week ${currentWeek.number} completed: ${thisWeekCompleted}`);
-                
-                // Debug: Show distribution of all milestones
-                const weekBreakdown = {};
-                const unmappedCount = allMilestones.filter(m => !m.hasValidWeekReference).length;
-                
-                for (let i = 1; i <= 12; i++) {
-                    const weekMilestones = allMilestones.filter(m => 
-                        m.hasValidWeekReference === true && m.weekNumber === i
-                    );
-                    if (weekMilestones.length > 0) {
-                        weekBreakdown[`Week ${i}`] = weekMilestones.length;
-                    }
-                }
-                
-                addDebugInfo(`Milestone distribution by week: ${JSON.stringify(weekBreakdown)}`);
-                addDebugInfo(`Unmapped milestones (no Week Reference): ${unmappedCount}`);
-                
-                // Update overall stats
-                document.getElementById('totalMilestones').textContent = totalMilestones;
-                
-                // Show current week completed / current week total in the card
-                document.getElementById('completedMilestones').textContent = `${thisWeekCompleted}/${thisWeekTotal}`;
-                
-                // Completion rate should be based on CURRENT WEEK only
-                const currentWeekCompletionRate = thisWeekTotal > 0 
-                    ? Math.round((thisWeekCompleted / thisWeekTotal) * 100) 
-                    : 0;
-                document.getElementById('completionRate').textContent = `${currentWeekCompletionRate}% week completion`;
-                
-                document.getElementById('thisWeekMilestones').textContent = thisWeekTotal;
-                document.getElementById('thisWeekSubtext').textContent = `Week ${currentWeek.number}: ${thisWeekCompleted}/${thisWeekTotal} completed`;
-                document.getElementById('criticalMilestones').textContent = criticalMilestones;
-                
-                // Calculate and update focus area metrics
-                const focusAreas = ['Career', 'Business', 'Health', 'Personal'];
-                
-                focusAreas.forEach(focusArea => {
-                    const metrics = calculateFocusAreaMetrics(allMilestones, focusArea, currentWeek);
-                    const prefix = focusArea.toLowerCase();
-                    
-                    // Update values
-                    document.getElementById(`${prefix}Total`).textContent = metrics.total;
-                    document.getElementById(`${prefix}Completed`).textContent = metrics.completed;
-                    document.getElementById(`${prefix}ThisWeek`).textContent = metrics.thisWeek;
-                    document.getElementById(`${prefix}Completion`).textContent = metrics.completionRate + '%';
-                    
-                    // Update progress bar
-                    document.getElementById(`${prefix}Progress`).style.width = metrics.completionRate + '%';
-                    
-                    // Render milestone list
-                    renderMilestoneList(metrics.milestones, `${prefix}Milestones`, currentWeek);
-                });
-
-                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
-                updateApiStatus('success');
-                addDebugInfo('All metrics updated successfully!');
-
-            } catch (error) {
-                console.error('Error updating metrics:', error);
-                addDebugInfo(`Error: ${error.message}`);
-                
-                // Show error in all fields
-                const errorElements = [
-                    'totalMilestones', 'completedMilestones', 'thisWeekMilestones', 'criticalMilestones',
-                    'careerTotal', 'careerCompleted', 'careerThisWeek',
-                    'businessTotal', 'businessCompleted', 'businessThisWeek',
-                    'healthTotal', 'healthCompleted', 'healthThisWeek',
-                    'personalTotal', 'personalCompleted', 'personalThisWeek'
-                ];
-                
-                errorElements.forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        element.innerHTML = '<span class="error">Error</span>';
-                    }
-                });
-                
-                updateApiStatus('error');
-            } finally {
-                isLoading = false;
-            }
-        }
-
-        function updateApiStatus(status) {
-            const statusEl = document.getElementById('apiStatus');
-            switch(status) {
-                case 'loading':
-                    statusEl.textContent = 'Updating...';
-                    statusEl.className = 'api-status status-loading';
-                    break;
-                case 'success':
-                    statusEl.textContent = 'Connected';
-                    statusEl.className = 'api-status status-success';
-                    break;
-                case 'error':
-                    statusEl.textContent = 'Error';
-                    statusEl.className = 'api-status status-error';
-                    break;
-            }
-        }
-
-        async function refreshData() {
-            const btn = document.getElementById('refreshBtn');
-            const span = btn.querySelector('span');
-            
-            btn.disabled = true;
-            span.style.transform = 'rotate(360deg)';
-            span.style.transition = 'transform 0.8s ease';
-            
-            await updateMetrics();
-            
-            setTimeout(() => {
-                span.style.transform = 'rotate(0deg)';
-                btn.disabled = false;
-            }, 800);
-        }
-
-        async function runAutomation() {
-            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
-                addDebugInfo('Error: Please configure your Notion integration token');
-                alert('Please configure your Notion integration token first');
-                return;
-            }
-
-            const btn = document.getElementById('automationBtn');
-            const span = btn.querySelector('span');
-            const originalText = span.textContent;
-            
-            btn.disabled = true;
-            span.textContent = '⏳ Converting Tasks...';
-            
-            addDebugInfo('Starting task automation...');
-            addDebugInfo('Converting planned tasks to milestones...');
-
-            try {
-                const response = await fetch(AUTOMATION_URL, {
+                // Query the Fitness Tracker 2025 database
+                const response = await fetch('/.netlify/functions/notion-proxy', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        token: NOTION_TOKEN,
+                        database_id: FITNESS_DB_ID,
+                        filter: {
+                            property: 'Week',
+                            select: {
+                                equals: `Week ${currentWeek.number}`
+                            }
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    processFitnessData(data.results || []);
+                }
+            } catch (error) {
+                console.error('Error loading fitness data:', error);
+                // Use fallback data if needed
+                updateFitnessDisplay();
+            }
+        }
+
+        // Process fitness data
+        function processFitnessData(entries) {
+            // Reset weekly data
+            fitnessData.workoutsCompleted = 0;
+            fitnessData.workoutDays = [];
+            fitnessData.weeklyDuration = 0;
+            fitnessData.weeklyCalories = 0;
+            let totalIntensity = 0;
+            let weights = [];
+
+            // Process each fitness entry
+            entries.forEach(entry => {
+                if (entry.properties) {
+                    // Count workouts
+                    if (entry.properties['Workout Type']?.select?.name) {
+                        fitnessData.workoutsCompleted++;
+                        
+                        // Track which day
+                        const date = new Date(entry.properties.Date?.date?.start);
+                        const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
+                        fitnessData.workoutDays.push(dayName);
+                    }
+
+                    // Sum duration
+                    if (entry.properties['Duration (min)']?.number) {
+                        fitnessData.weeklyDuration += entry.properties['Duration (min)'].number;
+                    }
+
+                    // Sum calories
+                    if (entry.properties['Calories Burned']?.number) {
+                        fitnessData.weeklyCalories += entry.properties['Calories Burned'].number;
+                    }
+
+                    // Track intensity
+                    if (entry.properties.Intensity?.select?.name) {
+                        totalIntensity += parseInt(entry.properties.Intensity.select.name);
+                    }
+
+                    // Track weights
+                    if (entry.properties['Weight (kg)']?.number) {
+                        weights.push(entry.properties['Weight (kg)'].number);
+                    }
+                }
+            });
+
+            // Calculate averages
+            fitnessData.consistency = Math.round((fitnessData.workoutsCompleted / 3) * 100);
+            fitnessData.avgIntensity = fitnessData.workoutsCompleted > 0 ? 
+                (totalIntensity / fitnessData.workoutsCompleted).toFixed(1) : 0;
+            
+            // Get latest weight
+            if (weights.length > 0) {
+                fitnessData.currentWeight = weights[weights.length - 1];
+                if (weights.length > 1) {
+                    fitnessData.weightLossRate = (weights[0] - weights[weights.length - 1]).toFixed(2);
+                }
+            }
+
+            // Calculate days since last workout
+            const today = new Date();
+            if (entries.length > 0) {
+                const lastWorkout = new Date(entries[entries.length - 1].properties.Date?.date?.start);
+                fitnessData.daysSinceWorkout = Math.floor((today - lastWorkout) / (1000 * 60 * 60 * 24));
+            }
+
+            updateFitnessDisplay();
+        }
+
+        // Update fitness display
+        function updateFitnessDisplay() {
+            // Update workout tracker
+            document.getElementById('workouts-completed').textContent = fitnessData.workoutsCompleted;
+            document.getElementById('consistency-percent').textContent = fitnessData.consistency;
+            
+            // Update fitness stats
+            document.getElementById('current-weight').textContent = `${fitnessData.currentWeight}kg`;
+            document.getElementById('weight-loss-rate').textContent = `${fitnessData.weightLossRate}kg/w`;
+            document.getElementById('avg-intensity').textContent = fitnessData.avgIntensity;
+            document.getElementById('days-since-workout').textContent = fitnessData.daysSinceWorkout;
+            
+            // Update workout days
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const today = new Date().getDay();
+            const todayName = days[today === 0 ? 6 : today - 1];
+            
+            days.forEach(day => {
+                const dayEl = document.querySelector(`[data-day="${day}"]`);
+                const statusEl = document.getElementById(`${day.toLowerCase()}-status`);
+                
+                if (dayEl && statusEl) {
+                    // Reset classes
+                    dayEl.classList.remove('completed', 'today');
+                    
+                    // Mark completed workouts
+                    if (fitnessData.workoutDays.includes(day)) {
+                        dayEl.classList.add('completed');
+                        statusEl.textContent = '✓';
+                    } else {
+                        statusEl.textContent = '-';
+                    }
+                    
+                    // Mark today
+                    if (day === todayName) {
+                        dayEl.classList.add('today');
+                    }
+                }
+            });
+            
+            // Update status badge
+            const statusEl = document.getElementById('fitness-status');
+            if (fitnessData.consistency >= 85.7) {
+                statusEl.textContent = '✅ On Track';
+                statusEl.className = 'health-status-badge status-on-track';
+            } else if (fitnessData.consistency >= 70) {
+                statusEl.textContent = '⚠️ Warning';
+                statusEl.className = 'health-status-badge status-warning';
+            } else {
+                statusEl.textContent = '🚨 Behind';
+                statusEl.className = 'health-status-badge status-behind';
+            }
+            
+            // Update alerts
+            updateFitnessAlerts();
+        }
+
+        // Update fitness alerts
+        function updateFitnessAlerts() {
+            const alertsContainer = document.getElementById('fitness-alerts');
+            alertsContainer.innerHTML = '';
+            
+            // Check if workout needed
+            if (fitnessData.workoutsCompleted < 3 && fitnessData.daysSinceWorkout >= 2) {
+                const alert = document.createElement('div');
+                alert.className = 'fitness-action-alert';
+                alert.innerHTML = `
+                    <h4>⚠️ Workout Required</h4>
+                    <p>Need ${3 - fitnessData.workoutsCompleted} more workout(s) this week. Last workout: ${fitnessData.daysSinceWorkout} days ago.</p>
+                `;
+                alertsContainer.appendChild(alert);
+            }
+            
+            // Check weight loss rate
+            if (fitnessData.weightLossRate < 0.4 && fitnessData.workoutsCompleted > 0) {
+                const alert = document.createElement('div');
+                alert.className = 'fitness-action-alert';
+                alert.innerHTML = `
+                    <h4>📊 Below Target Weight Loss</h4>
+                    <p>Current: ${fitnessData.weightLossRate}kg/week. Target: 0.58kg/week.</p>
+                `;
+                alertsContainer.appendChild(alert);
+            }
+        }
+
+        // Update metrics from milestones
+        function updateMetrics(milestones) {
+            // Overall progress
+            const totalMilestones = milestones.length;
+            const completedMilestones = milestones.filter(m => m.completed).length;
+            const overallPercentage = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+            
+            document.getElementById('overall-progress').textContent = `${completedMilestones}/${totalMilestones}`;
+            document.getElementById('overall-percentage').textContent = overallPercentage;
+            
+            // Week progress
+            const currentWeekRefId = WEEK_REFERENCE_IDS[currentWeek.number];
+            const weekMilestones = milestones.filter(m => {
+                // Check by Week Reference ID first
+                if (m.weekReferenceId && m.weekReferenceId === currentWeekRefId) {
+                    return true;
+                }
+                // Fallback to Week select field
+                return m.week === `Week ${currentWeek.number}`;
+            });
+            
+            const weekCompleted = weekMilestones.filter(m => m.completed).length;
+            const weekPercentage = weekMilestones.length > 0 ? Math.round((weekCompleted / weekMilestones.length) * 100) : 0;
+            
+            document.getElementById('week-milestones').textContent = `${weekCompleted}/${weekMilestones.length}`;
+            document.getElementById('week-percentage').textContent = `${weekPercentage}%`;
+            
+            // Overall completion rate
+            document.getElementById('completion-rate').textContent = `${overallPercentage}%`;
+            
+            // Update focus areas
+            const focusAreas = ['Career', 'Business', 'Health', 'Personal'];
+            focusAreas.forEach(area => {
+                const areaMilestones = milestones.filter(m => m.focusArea === area);
+                const areaCompleted = areaMilestones.filter(m => m.completed).length;
+                const areaPercentage = areaMilestones.length > 0 ? Math.round((areaCompleted / areaMilestones.length) * 100) : 0;
+                
+                const areaLower = area.toLowerCase();
+                document.getElementById(`${areaLower}-completed`).textContent = areaCompleted;
+                document.getElementById(`${areaLower}-total`).textContent = areaMilestones.length;
+                document.getElementById(`${areaLower}-percentage`).textContent = areaPercentage;
+                document.getElementById(`${areaLower}-remaining`).textContent = areaMilestones.length - areaCompleted;
+                document.getElementById(`${areaLower}-progress`).style.width = `${areaPercentage}%`;
+                
+                // Update milestone list for this area
+                const listContainer = document.getElementById(`${areaLower}-milestones`);
+                if (listContainer) {
+                    listContainer.innerHTML = '';
+                    const weekAreaMilestones = weekMilestones.filter(m => m.focusArea === area);
+                    
+                    if (weekAreaMilestones.length > 0) {
+                        weekAreaMilestones.forEach(milestone => {
+                            const item = document.createElement('div');
+                            item.className = `milestone-item ${milestone.completed ? 'completed' : ''}`;
+                            item.innerHTML = `
+                                <div class="milestone-checkbox">
+                                    ${milestone.completed ? '✓' : ''}
+                                </div>
+                                <div class="milestone-text">${milestone.task}</div>
+                            `;
+                            listContainer.appendChild(item);
+                        });
+                    } else {
+                        listContainer.innerHTML = '<div style="color: #a0aec0; font-size: 0.85rem;">No milestones for this week</div>';
+                    }
+                }
+            });
+            
+            // Update This Week section
+            updateThisWeekSection(weekMilestones);
+        }
+
+        // Update This Week section
+        function updateThisWeekSection(weekMilestones) {
+            const container = document.getElementById('this-week-milestones');
+            container.innerHTML = '';
+            
+            const focusAreas = ['Career', 'Business', 'Health', 'Personal'];
+            focusAreas.forEach(area => {
+                const areaMilestones = weekMilestones.filter(m => m.focusArea === area);
+                if (areaMilestones.length > 0) {
+                    const card = document.createElement('div');
+                    card.className = 'area-milestone-card';
+                    card.style.borderLeftColor = getAreaColor(area);
+                    
+                    const title = document.createElement('div');
+                    title.className = 'area-milestone-title';
+                    title.textContent = `${area} (${areaMilestones.filter(m => m.completed).length}/${areaMilestones.length})`;
+                    card.appendChild(title);
+                    
+                    areaMilestones.forEach(milestone => {
+                        const item = document.createElement('div');
+                        item.style.fontSize = '0.85rem';
+                        item.style.color = milestone.completed ? '#a0aec0' : '#4a5568';
+                        item.style.textDecoration = milestone.completed ? 'line-through' : 'none';
+                        item.style.marginBottom = '5px';
+                        item.textContent = `${milestone.completed ? '✓' : '○'} ${milestone.task}`;
+                        card.appendChild(item);
+                    });
+                    
+                    container.appendChild(card);
+                }
+            });
+            
+            if (container.innerHTML === '') {
+                container.innerHTML = '<div style="color: #a0aec0; text-align: center;">No milestones scheduled for this week</div>';
+            }
+        }
+
+        // Get area color
+        function getAreaColor(area) {
+            const colors = {
+                'Career': '#4299e1',
+                'Business': '#48bb78',
+                'Health': '#f56565',
+                'Personal': '#9f7aea'
+            };
+            return colors[area] || '#667eea';
+        }
+
+        // Update API status
+        function updateApiStatus(status) {
+            const statusEl = document.getElementById('api-status');
+            switch (status) {
+                case 'loading':
+                    statusEl.className = 'api-status status-loading';
+                    statusEl.textContent = 'Loading...';
+                    break;
+                case 'success':
+                    statusEl.className = 'api-status status-success';
+                    statusEl.textContent = 'API Connected';
+                    break;
+                case 'error':
+                    statusEl.className = 'api-status status-error';
+                    statusEl.textContent = 'API Error';
+                    break;
+            }
+        }
+
+        // Update fitness metrics (simulates "Update fitness dashboard" command)
+        async function updateFitnessMetrics() {
+            const btn = event.target;
+            btn.textContent = 'Updating...';
+            btn.disabled = true;
+            
+            try {
+                // This simulates calling Claude's "Update fitness dashboard" command
+                // In production, this would trigger the Strava → Claude → Notion flow
+                await loadFitnessData();
+                
+                btn.textContent = 'Updated ✓';
+                setTimeout(() => {
+                    btn.textContent = 'Update Fitness';
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('Error updating fitness:', error);
+                btn.textContent = 'Update Fitness';
+                btn.disabled = false;
+            }
+        }
+
+        // Run automation
+        async function runAutomation() {
+            const btn = event.target;
+            btn.textContent = '🔄 Running...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/.netlify/functions/task-automation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         token: NOTION_TOKEN
                     })
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                    throw new Error(`Automation failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
-                }
-
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    const { summary } = result;
-                    addDebugInfo(`✅ Automation completed successfully!`);
-                    addDebugInfo(`📊 Summary: ${summary.tasksProcessed} planned tasks processed`);
-                    addDebugInfo(`✨ Created: ${summary.milestonesCreated} milestones`);
-                    addDebugInfo(`🔗 Linked: ${summary.tasksLinked} tasks (now in progress)`);
-                    
-                    let message = `Task Conversion Complete! 🎉\n\n`;
-                    message += `📊 Processed: ${summary.tasksProcessed} planned tasks\n`;
-                    message += `✨ Created: ${summary.milestonesCreated} milestones\n`;
-                    message += `🔗 Updated: ${summary.tasksLinked} tasks to "In Progress"\n`;
-                    
-                    if (summary.errors > 0) {
-                        message += `⚠️ Errors: ${summary.errors} tasks had issues\n`;
-                        addDebugInfo(`⚠️ ${summary.errors} errors occurred during processing`);
-                    }
-                    
-                    message += `\nRefreshing dashboard...`;
-                    
-                    alert(message);
-                    
-                    // Auto-refresh the dashboard to show updated data
-                    setTimeout(() => {
-                        updateMetrics();
-                    }, 1000);
-                    
+                    showAutomationResult('success', result);
+                    // Reload data after automation
+                    setTimeout(() => loadData(), 2000);
                 } else {
-                    addDebugInfo(`❌ Automation failed: ${result.error}`);
-                    alert(`Automation failed: ${result.message || result.error}`);
+                    showAutomationResult('error', result);
                 }
-
             } catch (error) {
                 console.error('Automation error:', error);
-                addDebugInfo(`❌ Automation error: ${error.message}`);
-                alert(`Automation error: ${error.message}`);
+                showAutomationResult('error', { message: 'Automation failed. Check console for details.' });
             } finally {
+                btn.textContent = '🚀 Convert Planned Tasks';
                 btn.disabled = false;
-                span.textContent = originalText;
             }
         }
 
-        // Initial load
-        addDebugInfo('12 Week Year Dashboard initialized');
-        updateMetrics();
-
-        // Auto-refresh every 2 minutes
-        setInterval(updateMetrics, 120000);
-
-        // Add subtle animations to cards
-        document.querySelectorAll('.focus-area-card, .stat-card').forEach((card, index) => {
-            card.style.animationDelay = `${index * 0.1}s`;
-            card.style.animation = 'fadeInUp 0.6s ease forwards';
-            card.style.opacity = '0';
-        });
-
-        // Add fadeInUp animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
-</body>
-</html>
+        // Show automation result
+        function showAutomationResult(type, data) {
+            const resultEl = document.getElementById('automation-result');
+            const iconEl = document.getElementById('automation-icon');
+            const titleEl = document.getElementById('automation-title');
+            const contentEl = document.getElementById('automation-content');
+            
+            if (type === 'success') {
+                iconEl.textContent = '✅';
+                titleEl.textContent = 'Automation Complete';
+                
+                if (data.summary) {
+                    contentEl.innerHTML = `
+                        <div style="margin-bottom: 10px;">
+                            <strong>Tasks Processed:</strong> ${data.summary.tasksProcessed}<br>
+                            <strong>Milestones Created:</strong> ${data.summary.milestonesCreated}<br>
+                            <strong>Tasks Linked:</strong> ${data.summary.tasksLinked}<br>
+                            ${data.summary.duplicatesSkipped ? `<strong>Duplicates Skipped:</strong> ${data.summary.duplicatesSkipped}<br>` : ''}
+                            ${data.summary.errors ? `<strong>Errors:</strong> ${data.summary.errors}<br>` : ''}
+                        </div>
+                        <div style="font-
