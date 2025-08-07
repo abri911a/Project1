@@ -950,7 +950,113 @@
                 <div class="workout-week-tracker">
                     <div class="workout-week-header">
                         <div>
-                            <div style="font-weight: 700; font-size: 1.1rem;">This Week's Workouts</div>
+                            <div style="font-size: 0.85rem; color: #48bb78;">
+                            ${data.message || 'Dashboard will refresh automatically.'}
+                        </div>
+                    `;
+                } else {
+                    contentEl.innerHTML = `<div>${data.message || 'Operation completed successfully.'}</div>`;
+                }
+            } else {
+                iconEl.textContent = '❌';
+                titleEl.textContent = 'Automation Error';
+                contentEl.innerHTML = `
+                    <div style="color: #f56565;">
+                        ${data.message || 'An error occurred during automation.'}
+                        ${data.details ? `<br><small>${data.details}</small>` : ''}
+                    </div>
+                `;
+            }
+            
+            resultEl.classList.add('show');
+            setTimeout(() => closeAutomationResult(), 5000);
+        }
+
+        // Close automation result
+        function closeAutomationResult() {
+            const resultEl = document.getElementById('automation-result');
+            resultEl.classList.remove('show');
+        }
+
+        // Refresh data
+        async function refreshData() {
+            const btn = event.target;
+            btn.textContent = '⏳ Refreshing...';
+            btn.disabled = true;
+            
+            await loadData();
+            
+            btn.textContent = '✅ Refreshed';
+            setTimeout(() => {
+                btn.textContent = '🔄 Refresh Data';
+                btn.disabled = false;
+            }, 2000);
+        }
+
+        // Toggle debug mode
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const panel = document.getElementById('debug-panel');
+            panel.classList.toggle('active', debugMode);
+            
+            if (debugMode) {
+                updateDebugInfo();
+            }
+        }
+
+        // Update debug info
+        function updateDebugInfo() {
+            if (!debugMode) return;
+            
+            document.getElementById('debug-week').textContent = `Week ${currentWeek.number}`;
+            document.getElementById('debug-api').textContent = NOTION_TOKEN ? 'Token configured' : 'Token missing';
+            document.getElementById('debug-total').textContent = milestonesData.length;
+            document.getElementById('debug-week-ref').textContent = WEEK_REFERENCE_IDS[currentWeek.number] || 'Not configured';
+            document.getElementById('debug-update').textContent = new Date().toLocaleString();
+            
+            // Show raw data sample
+            const rawData = {
+                currentWeek: currentWeek,
+                totalMilestones: milestonesData.length,
+                weekMilestones: milestonesData.filter(m => m.week === `Week ${currentWeek.number}`).length,
+                fitnessData: fitnessData,
+                weekReferenceIds: WEEK_REFERENCE_IDS
+            };
+            document.getElementById('debug-raw').textContent = JSON.stringify(rawData, null, 2);
+        }
+
+        // Show error message
+        function showError(message) {
+            console.error(message);
+            // You could add a toast notification here
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', initDashboard);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Shift+D for debug mode
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                toggleDebug();
+            }
+            // Ctrl+R for refresh
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                refreshData();
+            }
+        });
+
+        // Handle visibility change for auto-refresh
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // Refresh when page becomes visible
+                loadData();
+            }
+        });
+    </script>
+</body>
+</html>weight: 700; font-size: 1.1rem;">This Week's Workouts</div>
                             <div style="opacity: 0.9; font-size: 0.85rem; margin-top: 4px;">
                                 <span id="workouts-completed">0</span> of 3 completed • 
                                 <span id="consistency-percent">0</span>% consistency
