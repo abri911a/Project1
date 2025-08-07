@@ -486,41 +486,108 @@
             opacity: 0.8;
         }
 
-        .fitness-quick-stats {
+        /* Live Fitness Metrics */
+        .fitness-live-metrics {
+            margin-top: 15px;
+        }
+
+        .fitness-metric-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .fitness-metric-card {
+            background: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            padding: 12px;
+            border-left: 4px solid #48bb78;
+            transition: all 0.3s ease;
+        }
+
+        .fitness-metric-card:hover {
+            background: rgba(255,255,255,0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .fitness-metric-card.weight {
+            border-left-color: #f56565;
+        }
+
+        .fitness-metric-card.workouts {
+            border-left-color: #48bb78;
+        }
+
+        .fitness-metric-card.intensity {
+            border-left-color: #ed8936;
+        }
+
+        .fitness-metric-card {
+            display: flex;
+            align-items: center;
             gap: 10px;
         }
 
-        .fitness-stat {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 8px;
+        .metric-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
         }
 
-        .fitness-stat-icon {
-            font-size: 1.2rem;
-        }
-
-        .fitness-stat-info {
+        .metric-info {
             flex: 1;
+            min-width: 0;
         }
 
-        .fitness-stat-title {
-            font-size: 0.7rem;
-            color: #718096;
-            text-transform: uppercase;
-            line-height: 1;
-        }
-
-        .fitness-stat-value {
-            font-size: 0.9rem;
-            font-weight: 600;
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
             color: #2d3748;
             line-height: 1.2;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin: 2px 0;
+        }
+
+        .metric-progress {
+            font-size: 0.8rem;
+            color: #4a5568;
+            opacity: 0.8;
+        }
+
+        /* Fitness Status Bar */
+        .fitness-status-bar {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-indicator.status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-indicator.status-warning {
+            background: #fed7d7;
+            color: #744210;
+        }
+
+        .status-indicator.status-danger {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .status-indicator.status-info {
+            background: #bee3f8;
+            color: #2b6cb0;
         }
 
         .loading { color: #a0aec0; font-size: 0.9rem; }
@@ -759,32 +826,43 @@
                 <!-- Fitness Integration Section -->
                 <div class="fitness-integration">
                     <div class="command-box">
-                        <div class="command-title">💡 Get Fitness Update</div>
+                        <div class="command-title">💡 Get Latest Fitness Update</div>
                         <div class="command-text">Say: "Update fitness dashboard"</div>
-                        <div class="command-desc">Claude will check Strava & provide insights</div>
+                        <div class="command-desc">Claude will check Strava & update the data below</div>
                     </div>
                     
-                    <div class="fitness-quick-stats">
-                        <div class="fitness-stat">
-                            <div class="fitness-stat-icon">⚖️</div>
-                            <div class="fitness-stat-info">
-                                <div class="fitness-stat-title">Weight Goal</div>
-                                <div class="fitness-stat-value">75kg → 68kg</div>
+                    <div class="fitness-live-metrics">
+                        <div class="fitness-metric-grid">
+                            <div class="fitness-metric-card weight">
+                                <div class="metric-icon">⚖️</div>
+                                <div class="metric-info">
+                                    <div class="metric-value" id="fitnessCurrentWeight">75.0kg</div>
+                                    <div class="metric-label">Current Weight</div>
+                                    <div class="metric-progress" id="fitnessWeightProgress">7.0kg to go</div>
+                                </div>
+                            </div>
+                            
+                            <div class="fitness-metric-card workouts">
+                                <div class="metric-icon">💪</div>
+                                <div class="metric-info">
+                                    <div class="metric-value" id="fitnessWorkoutsWeek">1/3</div>
+                                    <div class="metric-label">This Week</div>
+                                    <div class="metric-progress" id="fitnessConsistency">33% consistency</div>
+                                </div>
+                            </div>
+                            
+                            <div class="fitness-metric-card intensity">
+                                <div class="metric-icon">🔥</div>
+                                <div class="metric-info">
+                                    <div class="metric-value" id="fitnessAvgIntensity">-</div>
+                                    <div class="metric-label">Avg Intensity</div>
+                                    <div class="metric-progress">Target: 7+</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="fitness-stat">
-                            <div class="fitness-stat-icon">🎯</div>
-                            <div class="fitness-stat-info">
-                                <div class="fitness-stat-title">Target</div>
-                                <div class="fitness-stat-value">3 workouts/week</div>
-                            </div>
-                        </div>
-                        <div class="fitness-stat">
-                            <div class="fitness-stat-icon">📅</div>
-                            <div class="fitness-stat-info">
-                                <div class="fitness-stat-title">Timeline</div>
-                                <div class="fitness-stat-value">12 weeks</div>
-                            </div>
+                        
+                        <div class="fitness-status-bar" id="fitnessStatusBar">
+                            <div class="status-indicator status-warning">⚠️ Need 2 more workouts this week</div>
                         </div>
                     </div>
                 </div>
@@ -846,6 +924,7 @@
         const AUTOMATION_URL = '/.netlify/functions/task-automation';
         const MILESTONES_DB_ID = 'dab40b08-41d9-4457-bb96-471835d466b7';
         const WEEK_REFERENCE_DB_ID = '51b9b203-4232-4014-9407-1b8bd5e2c11b';
+        const FITNESS_DASHBOARD_DB_ID = '55615d1316a844b08432424441aa6f21';
         
         // 12 Week Year Start Date - Update this to your actual start date
         const TWELVE_WEEK_START = new Date('2025-08-04'); // Week 1: Aug 4-10, Week 2: Aug 11-17
@@ -1121,6 +1200,10 @@
                 // Fetch milestones
                 const rawMilestones = await fetchMilestones();
                 allMilestones = rawMilestones.map(processMilestone);
+                
+                // Fetch fitness data
+                const fitnessData = await fetchFitnessData();
+                updateFitnessMetrics(fitnessData);
                 
                 // Calculate overall metrics
                 const totalMilestones = allMilestones.length;
