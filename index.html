@@ -1025,6 +1025,8 @@
 
       // Replace the fetchMilestones function in your dashboard with this:
 
+/ Replace the fetchMilestones function in your dashboard with this version:
+
 async function fetchMilestones() {
     if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
         throw new Error('Please configure your Notion integration token');
@@ -1034,7 +1036,8 @@ async function fetchMilestones() {
     addDebugInfo(`Using Milestones DB ID: ${MILESTONES_DB_ID}`);
 
     try {
-_URL, {
+        // Use Netlify proxy function - REMOVED problematic sorts
+        const response = await fetch(PROXY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1043,15 +1046,24 @@ _URL, {
                 token: NOTION_TOKEN,
                 database_id: MILESTONES_DB_ID,
                 action: 'query',
-                page_size: 100
+                page_size: 100,
+                // REMOVED: sorts that referenced deleted "Week" property
+                // Now using no sorting or sort by a property that exists
+                sorts: [
+                    {
+                        property: 'Created', // This property exists
+                        direction: 'descending'
+                    }
+                ]
             })
         });
 
+        addDebugInfo(`Proxy response status: ${response.status}`);
+
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-            addDebugInfo(`Proxy response status: ${response.status}`);
-            addDebugInfo(`Proxy error details: ${JSON.stringify(errorData)}`);
-            throw new Error(`Proxy Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+            const errorText = await response.text();
+            addDebugInfo(`Proxy error response: ${errorText}`);
+            throw new Error(`Proxy Error: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
@@ -1060,7 +1072,80 @@ _URL, {
         return data.results || [];
     } catch (error) {
         addDebugInfo(`Error fetching milestones via proxy: ${error.message}`);
+        
+        // If network error, provide more specific debugging
+        if (error.message === 'Failed to fetch') {
+            addDebugInfo('Network error - checking if Netlify functions are deployed...');
+            addDebugInfo('Possible causes:');
+            addDebugInfo('1. Netlify functions not deployed');
+            addDebugInfo('2. Function URL incorrect');
+            addDebugInfo('3. CORS issues');
+            addDebugInfo(`Trying to reach: ${PROXY_URL}`);
+        }
+        
         throw error;
+    }
+}
+
+// Also add this function to test if your Netlify functions are working:
+async function testNetlifyFunctions() {
+    addDebugInfo('Testing Netlify function availability...');
+    
+    try {
+        // Test basic connectivity to Netlify functions
+        const testResponse = await fetch('/.netlify/functions/notion-proxy', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                test: true
+            })
+        });
+        
+        addDebugInfo(`Test response status: ${testResponse.status}`);
+        
+        if (testResponse.status === 400) {
+            addDebugInfo('✅ Netlify function is responding (400 = missing token, but function exists)');
+        } else if (testResponse.status === 404) {
+            addDebugInfo('❌ Netlify function not found - needs to be deployed');
+        } else {
+            addDebugInfo(`Netlify function responded with: ${testResponse.status}`);
+        }
+        
+    } catch (error) {
+        addDebugInfo(`❌ Cannot reach Netlify functions: ${error.message}`);
+        addDebugInfo('This means your Netlify functions are not deployed or accessible');
+    }
+}
+
+// Update your updateMetrics function to include the test:
+async function updateMetrics() {
+    if (isLoading) return;
+    isLoading = true;
+
+    try {
+        updateApiStatus('loading');
+        addDebugInfo('Starting metrics update...');
+        
+        // First test if Netlify functions are working
+        await testNetlifyFunctions();
+        
+        // Update week progress
+        const currentWeek = updateWeekProgress();
+        
+        // Fetch milestones
+        const rawMilestones = await fetchMilestones();
+        allMilestones = rawMilestones.map(processMilestone);
+        
+        // ... rest of your existing updateMetrics code
+        
+    } catch (error) {
+        console.error('Error updating metrics:', error);
+        addDebugInfo(`Error: ${error.message}`);
+        updateApiStatus('error');
+    } finally {
+        isLoading = false;
     }
 }
 
