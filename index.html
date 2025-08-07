@@ -1023,50 +1023,140 @@
             return week;
         }
 
-        async function fetchMilestones() {
-            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
-                throw new Error('Please configure your Notion integration token');
-            }
+      // Replace the fetchMilestones function in your dashboard with this:
 
-            addDebugInfo('Fetching milestones from Notion...');
-            addDebugInfo(`Using Milestones DB ID: ${MILESTONES_DB_ID}`);
+async function fetchMilestones() {
+    if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
+        throw new Error('Please configure your Notion integration token');
+    }
 
-            try {
-                // Use direct Notion API call instead of proxy
-                const response = await fetch(`https://api.notion.com/v1/databases/${MILESTONES_DB_ID}/query`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${NOTION_TOKEN}`,
-                        'Content-Type': 'application/json',
-                        'Notion-Version': '2022-06-28'
-                    },
-                    body: JSON.stringify({
-                        page_size: 100,
-                        sorts: [
-                            {
-                                property: 'Created',
-                                direction: 'descending'
-                            }
-                        ]
-                    })
-                });
+    addDebugInfo('Fetching milestones via Netlify proxy...');
+    addDebugInfo(`Using Milestones DB ID: ${MILESTONES_DB_ID}`);
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-                    addDebugInfo(`Notion API response status: ${response.status}`);
-                    addDebugInfo(`Notion API error details: ${JSON.stringify(errorData)}`);
-                    throw new Error(`Notion API Error: ${response.status} - ${errorData.message || 'Unknown error'}`);
-                }
+    try {
+_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                token: NOTION_TOKEN,
+                database_id: MILESTONES_DB_ID,
+                action: 'query',
+                page_size: 100
+            })
+        });
 
-                const data = await response.json();
-                addDebugInfo(`Fetched ${data.results?.length || 0} milestones from Notion API`);
-                
-                return data.results || [];
-            } catch (error) {
-                addDebugInfo(`Error fetching milestones: ${error.message}`);
-                throw error;
-            }
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            addDebugInfo(`Proxy response status: ${response.status}`);
+            addDebugInfo(`Proxy error details: ${JSON.stringify(errorData)}`);
+            throw new Error(`Proxy Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
         }
+
+        const data = await response.json();
+        addDebugInfo(`Fetched ${data.results?.length || 0} milestones via proxy`);
+        
+        return data.results || [];
+    } catch (error) {
+        addDebugInfo(`Error fetching milestones via proxy: ${error.message}`);
+        throw error;
+    }
+}
+
+// Also add this function for fitness data
+async function fetchFitnessData() {
+    try {
+        addDebugInfo('Fetching fitness data...');
+        
+        const response = await fetch(PROXY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                token: NOTION_TOKEN,
+                database_id: FITNESS_DASHBOARD_DB_ID,
+                action: 'query',
+                filter: {
+                    property: "Dashboard Type",
+                    select: {
+                        equals: "Main"
+                    }
+                }
+            })
+        });
+
+        if (!response.ok) {
+            addDebugInfo(`Fitness data fetch failed: ${response.status}`);
+            return null;
+        }
+
+        const data = await response.json();
+        const fitnessEntry = data.results?.[0];
+        
+        if (fitnessEntry) {
+            const props = fitnessEntry.properties;
+            return {
+                currentWeight: props['Current Weight']?.number || 75,
+                goalWeight: props['Goal Weight']?.number || 68,
+                startingWeight: props['Starting Weight']?.number || 75,
+                workoutsThisWeek: props['Workouts This Week']?.number || 0,
+                weekNumber: props['Week Number']?.number || 1,
+                lastUpdated: props['Last Updated']?.date?.start || new Date().toISOString()
+            };
+        }
+        
+        return null;
+    } catch (error) {
+        addDebugInfo(`Error fetching fitness data: ${error.message}`);
+        return null;
+    }
+}
+
+function updateFitnessMetrics(fitnessData) {
+    if (!fitnessData) {
+        addDebugInfo('No fitness data available, using defaults');
+        fitnessData = {
+            currentWeight: 75,
+            goalWeight: 68,
+            startingWeight: 75,
+            workoutsThisWeek: 0,
+            weekNumber: 1
+        };
+    }
+    
+    // Update weight display
+    const weightRemaining = fitnessData.currentWeight - fitnessData.goalWeight;
+    document.getElementById('fitnessCurrentWeight').textContent = `${fitnessData.currentWeight}kg`;
+    document.getElementById('fitnessWeightProgress').textContent = `${weightRemaining.toFixed(1)}kg to go`;
+    
+    // Update workouts
+    const workoutTarget = 3; // 3 workouts per week
+    const consistency = Math.round((fitnessData.workoutsThisWeek / workoutTarget) * 100);
+    document.getElementById('fitnessWorkoutsWeek').textContent = `${fitnessData.workoutsThisWeek}/${workoutTarget}`;
+    document.getElementById('fitnessConsistency').textContent = `${consistency}% consistency`;
+    
+    // Update status based on workouts
+    const statusBar = document.getElementById('fitnessStatusBar');
+    const statusIndicator = statusBar.querySelector('.status-indicator');
+    
+    if (fitnessData.workoutsThisWeek >= 3) {
+        statusIndicator.className = 'status-indicator status-success';
+        statusIndicator.textContent = '✅ Weekly workout goal achieved!';
+    } else if (fitnessData.workoutsThisWeek >= 2) {
+        statusIndicator.className = 'status-indicator status-warning';
+        statusIndicator.textContent = `⚠️ Need ${3 - fitnessData.workoutsThisWeek} more workout this week`;
+    } else if (fitnessData.workoutsThisWeek >= 1) {
+        statusIndicator.className = 'status-indicator status-warning';
+        statusIndicator.textContent = `⚠️ Need ${3 - fitnessData.workoutsThisWeek} more workouts this week`;
+    } else {
+        statusIndicator.className = 'status-indicator status-danger';
+        statusIndicator.textContent = '🚨 No workouts logged this week - start today!';
+    }
+    
+    addDebugInfo(`Fitness metrics updated: ${fitnessData.currentWeight}kg, ${fitnessData.workoutsThisWeek}/3 workouts`);
+}
 
         function processMilestone(milestone) {
             const props = milestone.properties;
