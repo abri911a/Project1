@@ -1255,9 +1255,36 @@
                 const fitnessData = await fetchFitnessData();
                 updateFitnessMetrics(fitnessData);
                 
-                const totalMilestones = allMilestones.length;
-                const completedMilestones = allMilestones.filter(m => m.completed).length;
-                const completionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+                // NEW CODE (calculates based on CURRENT WEEK milestones only):
+const totalMilestones = allMilestones.length;
+const completedMilestones = allMilestones.filter(m => m.completed).length;
+
+// Calculate THIS WEEK's completion rate
+const thisWeekMilestones = allMilestones.filter(m => 
+    m.weekNumberFromReference === currentWeek.number
+);
+const thisWeekCompleted = thisWeekMilestones.filter(m => m.completed).length;
+const thisWeekTotal = thisWeekMilestones.length;
+const thisWeekCompletionRate = thisWeekTotal > 0 ? Math.round((thisWeekCompleted / thisWeekTotal) * 100) : 0;
+
+// Update the display elements:
+document.getElementById('totalMilestones').textContent = totalMilestones;
+document.getElementById('completedMilestones').textContent = `${thisWeekCompleted}/${thisWeekTotal}`; // Show current week fraction
+document.getElementById('completionRate').textContent = `${thisWeekCompletionRate}% this week`; // Show current week rate
+document.getElementById('thisWeekMilestones').textContent = thisWeekTotal;
+document.getElementById('thisWeekSubtext').textContent = `${thisWeekCompleted} of ${thisWeekTotal} completed`;
+
+// Also update the debug info:
+addDebugInfo(`Week ${currentWeek.number}: ${thisWeekCompleted}/${thisWeekTotal} completed (${thisWeekCompletionRate}%)`);
+
+// If you want to also show overall completion somewhere, you can add:
+const overallCompletionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+document.getElementById('totalMilestonesSubtext').textContent = `${overallCompletionRate}% overall completion`;
+
+// Update the stat card labels to be clearer:
+// Change the "Completed" card label to show it's current week focused
+document.querySelector('.stat-card:nth-child(2) .stat-label').textContent = 'This Week Done';
+document.querySelector('.stat-card:nth-child(2) .stat-subtext').textContent = `${thisWeekCompletionRate}% week completion`;
                 const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
                 const thisWeekMilestones = allMilestones.filter(m => 
                     m.weekNumberFromReference === currentWeek.number
