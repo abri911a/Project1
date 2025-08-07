@@ -716,15 +716,15 @@
                 <div class="stat-value" id="completedMilestones">
                     <span class="loading">...</span>
                 </div>
-                <div class="stat-label">Completed</div>
-                <div class="stat-subtext" id="completionRate">0% completion rate</div>
+                <div class="stat-label">This Week Done</div>
+                <div class="stat-subtext" id="completionRate">0% week completion</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">🎯</div>
                 <div class="stat-value" id="thisWeekMilestones">
                     <span class="loading">...</span>
                 </div>
-                <div class="stat-label">This Week</div>
+                <div class="stat-label">This Week Total</div>
                 <div class="stat-subtext" id="thisWeekSubtext">Due in current week</div>
             </div>
             <div class="stat-card">
@@ -1196,17 +1196,17 @@
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            const thisWeek = focusMilestones.filter(m => 
+            const currentWeekFocusMilestones = focusMilestones.filter(m => 
                 m.weekNumberFromReference === currentWeek.number
             );
             
-            addDebugInfo(`${focusArea}: ${total} total, ${completed} completed, ${thisWeek.length} this week`);
+            addDebugInfo(`${focusArea}: ${total} total, ${completed} completed, ${currentWeekFocusMilestones.length} this week`);
             
             return {
                 total,
                 completed,
                 completionRate,
-                thisWeek: thisWeek.length,
+                thisWeek: currentWeekFocusMilestones.length,
                 milestones: focusMilestones
             };
         }
@@ -1255,54 +1255,29 @@
                 const fitnessData = await fetchFitnessData();
                 updateFitnessMetrics(fitnessData);
                 
-                // NEW CODE (calculates based on CURRENT WEEK milestones only):
-const totalMilestones = allMilestones.length;
-const completedMilestones = allMilestones.filter(m => m.completed).length;
-
-// Calculate THIS WEEK's milestones (rename variable to avoid conflict)
-const currentWeekMilestones = allMilestones.filter(m => 
-    m.weekNumberFromReference === currentWeek.number
-);
-const currentWeekCompleted = currentWeekMilestones.filter(m => m.completed).length;
-const currentWeekTotal = currentWeekMilestones.length;
-const currentWeekCompletionRate = currentWeekTotal > 0 ? Math.round((currentWeekCompleted / currentWeekTotal) * 100) : 0;
-
-const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
-
-// Update display elements
-document.getElementById('totalMilestones').textContent = totalMilestones;
-document.getElementById('completedMilestones').textContent = `${currentWeekCompleted}/${currentWeekTotal}`;
-document.getElementById('completionRate').textContent = `${currentWeekCompletionRate}% this week`;
-document.getElementById('thisWeekMilestones').textContent = currentWeekTotal;
-document.getElementById('thisWeekSubtext').textContent = `${currentWeekCompleted} of ${currentWeekTotal} completed`;
-document.getElementById('criticalMilestones').textContent = criticalMilestones;
-
-// Debug info
-addDebugInfo(`Week ${currentWeek.number}: ${currentWeekCompleted}/${currentWeekTotal} completed (${currentWeekCompletionRate}%)`);
-
-// IMPORTANT: Make sure you don't have another "thisWeekMilestones" variable declared elsewhere in the function
-// If you do, remove it or rename one of them
-
-// If you want to also show overall completion somewhere, you can add:
-const overallCompletionRate = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
-document.getElementById('totalMilestonesSubtext').textContent = `${overallCompletionRate}% overall completion`;
-
-// Update the stat card labels to be clearer:
-// Change the "Completed" card label to show it's current week focused
-document.querySelector('.stat-card:nth-child(2) .stat-label').textContent = 'This Week Done';
-document.querySelector('.stat-card:nth-child(2) .stat-subtext').textContent = `${thisWeekCompletionRate}% week completion`;
-                const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
-                const thisWeekMilestones = allMilestones.filter(m => 
+                // Calculate metrics - FIXED VERSION with unique variable names
+                const totalMilestones = allMilestones.length;
+                const overallCompleted = allMilestones.filter(m => m.completed).length;
+                
+                // Calculate THIS WEEK's milestones (using unique variable name)
+                const currentWeekMilestones = allMilestones.filter(m => 
                     m.weekNumberFromReference === currentWeek.number
-                ).length;
+                );
+                const currentWeekCompleted = currentWeekMilestones.filter(m => m.completed).length;
+                const currentWeekTotal = currentWeekMilestones.length;
+                const currentWeekCompletionRate = currentWeekTotal > 0 ? Math.round((currentWeekCompleted / currentWeekTotal) * 100) : 0;
+                
+                const criticalMilestones = allMilestones.filter(m => m.deadlineType === 'Critical (Fixed)').length;
+                const overallCompletionRate = totalMilestones > 0 ? Math.round((overallCompleted / totalMilestones) * 100) : 0;
                 
                 // Update overall stats
                 document.getElementById('totalMilestones').textContent = totalMilestones;
-                document.getElementById('completedMilestones').textContent = completedMilestones;
-                document.getElementById('completionRate').textContent = `${completionRate}% completion rate`;
-                document.getElementById('thisWeekMilestones').textContent = thisWeekMilestones;
-                document.getElementById('thisWeekSubtext').textContent = `Week ${currentWeek.number} milestones`;
+                document.getElementById('completedMilestones').textContent = `${currentWeekCompleted}/${currentWeekTotal}`;
+                document.getElementById('completionRate').textContent = `${currentWeekCompletionRate}% week completion`;
+                document.getElementById('thisWeekMilestones').textContent = currentWeekTotal;
+                document.getElementById('thisWeekSubtext').textContent = `${currentWeekCompleted} of ${currentWeekTotal} completed`;
                 document.getElementById('criticalMilestones').textContent = criticalMilestones;
+                document.getElementById('totalMilestonesSubtext').textContent = `${overallCompletionRate}% overall completion`;
                 
                 // Update focus areas
                 const focusAreas = ['Career', 'Business', 'Health', 'Personal'];
@@ -1325,7 +1300,7 @@ document.querySelector('.stat-card:nth-child(2) .stat-subtext').textContent = `$
 
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 updateApiStatus('success');
-                addDebugInfo('✅ All metrics updated successfully!');
+                addDebugInfo(`✅ Week ${currentWeek.number}: ${currentWeekCompleted}/${currentWeekTotal} completed (${currentWeekCompletionRate}%)`);
 
             } catch (error) {
                 console.error('Error updating metrics:', error);
