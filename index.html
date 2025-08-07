@@ -114,6 +114,23 @@
             cursor: not-allowed;
         }
 
+        /* Week Sync Button Styles */
+        #weekSyncBtn {
+            background: linear-gradient(135deg, #9f7aea, #805ad5) !important;
+            border: none;
+            font-weight: 600;
+        }
+
+        #weekSyncBtn:hover {
+            background: linear-gradient(135deg, #805ad5, #6b46c1) !important;
+        }
+
+        #weekSyncBtn:disabled {
+            background: rgba(255,255,255,0.1) !important;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .api-status {
             padding: 4px 12px;
             border-radius: 12px;
@@ -674,13 +691,12 @@
                 <button class="refresh-btn automation-btn" id="automationBtn" onclick="runAutomation()">
                     <span>📅➡️📝 Convert Planned Tasks</span>
                 </button>
+                <button class="refresh-btn automation-btn" id="weekSyncBtn" onclick="syncWeekReferences()">
+                    <span>🔄 Sync Week References</span>
+                </button>
                 <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
                     <span>🔄 Refresh</span>
                 </button>
-
-<button class="refresh-btn automation-btn" id="weekSyncBtn" onclick="syncWeekReferences()">
-    <span>🔄 Sync Week References</span>
-</button>
             </div>
         </div>
 
@@ -935,148 +951,6 @@
     </div>
 
     <script>
-// Add these functions to your dashboard JavaScript
-
-// ENHANCED: Original automation function now with Week Reference sync
-async function runAutomation() {
-    if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
-        addDebugInfo('Error: Please configure your Notion integration token');
-        alert('Please configure your Notion integration token first');
-        return;
-    }
-
-    const btn = document.getElementById('automationBtn');
-    const span = btn.querySelector('span');
-    const originalText = span.textContent;
-    
-    btn.disabled = true;
-    span.textContent = '⏳ Converting Tasks + Syncing Weeks...';
-    
-    addDebugInfo('Starting enhanced automation (tasks + week sync)...');
-
-    try {
-        const response = await fetch(AUTOMATION_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                token: NOTION_TOKEN,
-                action: 'convert_tasks' // Default action
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-            throw new Error(`Automation failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
-        }
-
-        const result = await response.json();
-        
-        if (result.success) {
-            const { summary } = result;
-            addDebugInfo(`✅ Task conversion completed!`);
-            addDebugInfo(`📊 Tasks processed: ${summary.tasksProcessed}`);
-            addDebugInfo(`✨ Milestones created: ${summary.milestonesCreated}`);
-            addDebugInfo(`🔗 Tasks linked: ${summary.tasksLinked}`);
-            addDebugInfo(`🔄 Week references synced: ${summary.weekSynced || 0}`); // NEW
-            
-            let message = `Enhanced Automation Complete! 🎉\n\n`;
-            message += `📊 Processed: ${summary.tasksProcessed} planned tasks\n`;
-            message += `✨ Created: ${summary.milestonesCreated} milestones\n`;
-            message += `🔗 Linked: ${summary.tasksLinked} tasks\n`;
-            if (summary.weekSynced > 0) {
-                message += `🔄 Synced: ${summary.weekSynced} week references\n`; // NEW
-            }
-            
-            alert(message);
-            
-            // Auto-refresh the dashboard
-            setTimeout(() => {
-                updateMetrics();
-            }, 1000);
-            
-        } else {
-            addDebugInfo(`❌ Automation failed: ${result.error}`);
-            alert(`Automation failed: ${result.message || result.error}`);
-        }
-
-    } catch (error) {
-        console.error('Automation error:', error);
-        addDebugInfo(`❌ Automation error: ${error.message}`);
-        alert(`Automation error: ${error.message}`);
-    } finally {
-        btn.disabled = false;
-        span.textContent = originalText;
-    }
-}
-
-// NEW: Dedicated Week Reference Sync function
-async function syncWeekReferences() {
-    if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
-        addDebugInfo('Error: Please configure your Notion integration token');
-        alert('Please configure your Notion integration token first');
-        return;
-    }
-
-    addDebugInfo('🔄 Starting Week Reference → Scorecard Week sync...');
-
-    try {
-        const response = await fetch(AUTOMATION_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                token: NOTION_TOKEN,
-                action: 'sync_week_references' // NEW action
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-            throw new Error(`Week sync failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
-        }
-
-        const result = await response.json();
-        
-        if (result.success) {
-            const { summary } = result;
-            addDebugInfo(`✅ Week Reference sync completed!`);
-            addDebugInfo(`📊 Milestones processed: ${summary.milestonesProcessed}`);
-            addDebugInfo(`🔄 Synced: ${summary.syncedCount}`);
-            addDebugInfo(`⏭️ Already correct: ${summary.skippedCount}`);
-            addDebugInfo(`❌ Errors: ${summary.errorCount}`);
-            
-            let message = `Week Reference Sync Complete! 🔄\n\n`;
-            message += `📊 Processed: ${summary.milestonesProcessed} milestones\n`;
-            message += `🔄 Synced: ${summary.syncedCount} week references\n`;
-            message += `⏭️ Already correct: ${summary.skippedCount}\n`;
-            if (summary.errorCount > 0) {
-                message += `❌ Errors: ${summary.errorCount}\n`;
-            }
-            
-            alert(message);
-            
-            // Auto-refresh the dashboard
-            if (summary.syncedCount > 0) {
-                setTimeout(() => {
-                    updateMetrics();
-                }, 1000);
-            }
-            
-        } else {
-            addDebugInfo(`❌ Week sync failed: ${result.error}`);
-            alert(`Week sync failed: ${result.message || result.error}`);
-        }
-
-    } catch (error) {
-        console.error('Week sync error:', error);
-        addDebugInfo(`❌ Week sync error: ${error.message}`);
-        alert(`Week sync error: ${error.message}`);
-    }
-}
-
         // Configuration - Your actual working values
         const NOTION_TOKEN = 'ntn_b55257931953XqXokP3C4fgFnUeSEgIoyV76UljY20x4cP';
         const PROXY_URL = '/.netlify/functions/notion-proxy';
@@ -1491,6 +1365,7 @@ async function syncWeekReferences() {
             }, 800);
         }
 
+        // ENHANCED: Original automation function now with Week Reference sync
         async function runAutomation() {
             if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
                 addDebugInfo('Error: Please configure your Notion integration token');
@@ -1503,9 +1378,9 @@ async function syncWeekReferences() {
             const originalText = span.textContent;
             
             btn.disabled = true;
-            span.textContent = '⏳ Converting Tasks...';
+            span.textContent = '⏳ Converting Tasks + Syncing Weeks...';
             
-            addDebugInfo('Starting task automation...');
+            addDebugInfo('Starting enhanced automation (tasks + week sync)...');
 
             try {
                 const response = await fetch(AUTOMATION_URL, {
@@ -1514,7 +1389,8 @@ async function syncWeekReferences() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        token: NOTION_TOKEN
+                        token: NOTION_TOKEN,
+                        action: 'convert_tasks' // Default action
                     })
                 });
 
@@ -1527,18 +1403,18 @@ async function syncWeekReferences() {
                 
                 if (result.success) {
                     const { summary } = result;
-                    addDebugInfo(`✅ Automation completed successfully!`);
-                    addDebugInfo(`📊 Summary: ${summary.tasksProcessed} planned tasks processed`);
-                    addDebugInfo(`✨ Created: ${summary.milestonesCreated} milestones`);
-                    addDebugInfo(`🔗 Linked: ${summary.tasksLinked} tasks`);
+                    addDebugInfo(`✅ Task conversion completed!`);
+                    addDebugInfo(`📊 Tasks processed: ${summary.tasksProcessed}`);
+                    addDebugInfo(`✨ Milestones created: ${summary.milestonesCreated}`);
+                    addDebugInfo(`🔗 Tasks linked: ${summary.tasksLinked}`);
+                    addDebugInfo(`🔄 Week references synced: ${summary.weekSynced || 0}`);
                     
-                    let message = `Task Conversion Complete! 🎉\n\n`;
+                    let message = `Enhanced Automation Complete! 🎉\n\n`;
                     message += `📊 Processed: ${summary.tasksProcessed} planned tasks\n`;
                     message += `✨ Created: ${summary.milestonesCreated} milestones\n`;
-                    message += `🔗 Updated: ${summary.tasksLinked} tasks to "In Progress"\n`;
-                    
-                    if (summary.errors > 0) {
-                        message += `⚠️ Errors: ${summary.errors} tasks had issues\n`;
+                    message += `🔗 Linked: ${summary.tasksLinked} tasks\n`;
+                    if (summary.weekSynced > 0) {
+                        message += `🔄 Synced: ${summary.weekSynced} week references\n`;
                     }
                     
                     alert(message);
@@ -1557,6 +1433,82 @@ async function syncWeekReferences() {
                 console.error('Automation error:', error);
                 addDebugInfo(`❌ Automation error: ${error.message}`);
                 alert(`Automation error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                span.textContent = originalText;
+            }
+        }
+
+        // NEW: Dedicated Week Reference Sync function
+        async function syncWeekReferences() {
+            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
+                addDebugInfo('Error: Please configure your Notion integration token');
+                alert('Please configure your Notion integration token first');
+                return;
+            }
+
+            const btn = document.getElementById('weekSyncBtn');
+            const span = btn.querySelector('span');
+            const originalText = span.textContent;
+            
+            btn.disabled = true;
+            span.textContent = '⏳ Syncing Week References...';
+            
+            addDebugInfo('🔄 Starting Week Reference → Scorecard Week sync...');
+
+            try {
+                const response = await fetch(AUTOMATION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: NOTION_TOKEN,
+                        action: 'sync_week_references' // NEW action
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(`Week sync failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const { summary } = result;
+                    addDebugInfo(`✅ Week Reference sync completed!`);
+                    addDebugInfo(`📊 Milestones processed: ${summary.milestonesProcessed}`);
+                    addDebugInfo(`🔄 Synced: ${summary.syncedCount}`);
+                    addDebugInfo(`⏭️ Already correct: ${summary.skippedCount}`);
+                    addDebugInfo(`❌ Errors: ${summary.errorCount}`);
+                    
+                    let message = `Week Reference Sync Complete! 🔄\n\n`;
+                    message += `📊 Processed: ${summary.milestonesProcessed} milestones\n`;
+                    message += `🔄 Synced: ${summary.syncedCount} week references\n`;
+                    message += `⏭️ Already correct: ${summary.skippedCount}\n`;
+                    if (summary.errorCount > 0) {
+                        message += `❌ Errors: ${summary.errorCount}\n`;
+                    }
+                    
+                    alert(message);
+                    
+                    // Auto-refresh the dashboard
+                    if (summary.syncedCount > 0) {
+                        setTimeout(() => {
+                            updateMetrics();
+                        }, 1000);
+                    }
+                    
+                } else {
+                    addDebugInfo(`❌ Week sync failed: ${result.error}`);
+                    alert(`Week sync failed: ${result.message || result.error}`);
+                }
+
+            } catch (error) {
+                console.error('Week sync error:', error);
+                addDebugInfo(`❌ Week sync error: ${error.message}`);
+                alert(`Week sync error: ${error.message}`);
             } finally {
                 btn.disabled = false;
                 span.textContent = originalText;
