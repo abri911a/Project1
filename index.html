@@ -114,6 +114,23 @@
             cursor: not-allowed;
         }
 
+        /* Fitness Sync Button Styles */
+        #fitnessSyncBtn {
+            background: linear-gradient(135deg, #f56565, #e53e3e) !important;
+            border: none;
+            font-weight: 600;
+        }
+
+        #fitnessSyncBtn:hover {
+            background: linear-gradient(135deg, #e53e3e, #c53030) !important;
+        }
+
+        #fitnessSyncBtn:disabled {
+            background: rgba(255,255,255,0.1) !important;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         /* Week Sync Button Styles */
         #weekSyncBtn {
             background: linear-gradient(135deg, #9f7aea, #805ad5) !important;
@@ -691,6 +708,9 @@
                 <button class="refresh-btn automation-btn" id="automationBtn" onclick="runAutomation()">
                     <span>📅➡️📝 Convert Planned Tasks</span>
                 </button>
+                <button class="refresh-btn automation-btn" id="fitnessSyncBtn" onclick="syncFitnessData()">
+                    <span>💪 Sync Fitness Data</span>
+                </button>
                 <button class="refresh-btn automation-btn" id="weekSyncBtn" onclick="syncWeekReferences()">
                     <span>🔄 Sync Week References</span>
                 </button>
@@ -856,7 +876,7 @@
                     </div>
                 </div>
                 
-                <!-- Fitness Integration Section -->
+                <!-- Enhanced Fitness Integration Section -->
                 <div class="fitness-integration">
                     <div class="command-box">
                         <div class="command-title">💡 Get Latest Fitness Update</div>
@@ -869,25 +889,25 @@
                             <div class="fitness-metric-card weight">
                                 <div class="metric-icon">⚖️</div>
                                 <div class="metric-info">
-                                    <div class="metric-value" id="fitnessCurrentWeight">75.0kg</div>
+                                    <div class="metric-value" id="fitnessCurrentWeight">Loading...</div>
                                     <div class="metric-label">Current Weight</div>
-                                    <div class="metric-progress" id="fitnessWeightProgress">7.0kg to go</div>
+                                    <div class="metric-progress" id="fitnessWeightProgress">Calculating...</div>
                                 </div>
                             </div>
                             
                             <div class="fitness-metric-card workouts">
                                 <div class="metric-icon">💪</div>
                                 <div class="metric-info">
-                                    <div class="metric-value" id="fitnessWorkoutsWeek">2/3</div>
+                                    <div class="metric-value" id="fitnessWorkoutsWeek">Loading...</div>
                                     <div class="metric-label">This Week</div>
-                                    <div class="metric-progress" id="fitnessConsistency">67% consistency</div>
+                                    <div class="metric-progress" id="fitnessConsistency">Calculating...</div>
                                 </div>
                             </div>
                             
                             <div class="fitness-metric-card intensity">
                                 <div class="metric-icon">🔥</div>
                                 <div class="metric-info">
-                                    <div class="metric-value" id="fitnessAvgIntensity">8.5</div>
+                                    <div class="metric-value" id="fitnessAvgIntensity">Loading...</div>
                                     <div class="metric-label">Avg Intensity</div>
                                     <div class="metric-progress">Target: 7+</div>
                                 </div>
@@ -895,7 +915,7 @@
                         </div>
                         
                         <div class="fitness-status-bar" id="fitnessStatusBar">
-                            <div class="status-indicator status-warning">⚠️ Need 1 more workout this week</div>
+                            <div class="status-indicator status-info">🔄 Loading fitness status...</div>
                         </div>
                     </div>
                 </div>
@@ -978,6 +998,7 @@
         let isLoading = false;
         let debugData = [];
         let allMilestones = [];
+        let lastFitnessData = null;
 
         function addDebugInfo(message) {
             const timestamp = new Date().toLocaleTimeString();
@@ -1089,10 +1110,12 @@
             }
         }
 
+        // ENHANCED: Real-time fitness data fetching with multiple approaches
         async function fetchFitnessData() {
             try {
-                addDebugInfo('Fetching fitness data...');
+                addDebugInfo('🔄 Fetching fitness data with enhanced real-time sync...');
                 
+                // Approach 1: Query all entries and find the most recent "Main"
                 const response = await fetch(PROXY_URL, {
                     method: 'POST',
                     headers: {
@@ -1101,84 +1124,190 @@
                     body: JSON.stringify({
                         token: NOTION_TOKEN,
                         database_id: FITNESS_DASHBOARD_DB_ID,
-                        filter: {
-                            property: "Dashboard Type",
-                            select: {
-                                equals: "Main"
+                        page_size: 20,
+                        sorts: [
+                            {
+                                property: 'Last edited time',
+                                direction: 'descending'
                             }
-                        }
+                        ]
                     })
                 });
 
                 if (!response.ok) {
-                    addDebugInfo(`Fitness data fetch failed: ${response.status}`);
-                    return null;
+                    addDebugInfo(`❌ Fitness data fetch failed: ${response.status}`);
+                    throw new Error(`Fitness API error: ${response.status}`);
                 }
 
                 const data = await response.json();
-                const fitnessEntry = data.results?.[0];
+                addDebugInfo(`📊 Found ${data.results?.length || 0} fitness entries`);
                 
-                if (fitnessEntry) {
-                    const props = fitnessEntry.properties;
-                    return {
-                        currentWeight: props['Current Weight']?.number || 75,
-                        goalWeight: props['Goal Weight']?.number || 68,
-                        startingWeight: props['Starting Weight']?.number || 75,
-                        workoutsThisWeek: props['Workouts This Week']?.number || 2,
-                        weekNumber: props['Week Number']?.number || 1,
-                        lastUpdated: props['Last Updated']?.date?.start || new Date().toISOString()
-                    };
+                if (!data.results || data.results.length === 0) {
+                    addDebugInfo('⚠️ No fitness entries found');
+                    return null;
                 }
                 
-                return null;
+                // Find the most recent "Main" entry
+                let mainEntry = null;
+                for (const entry of data.results) {
+                    const dashboardType = entry.properties?.['Dashboard Type']?.select?.name;
+                    addDebugInfo(`📋 Entry: "${entry.properties?.title?.title?.[0]?.text?.content}" - Type: ${dashboardType}`);
+                    
+                    if (dashboardType === 'Main') {
+                        mainEntry = entry;
+                        break;
+                    }
+                }
+                
+                if (!mainEntry) {
+                    addDebugInfo('⚠️ No "Main" type entry found, using first entry');
+                    mainEntry = data.results[0];
+                }
+                
+                const props = mainEntry.properties;
+                const fitnessData = {
+                    currentWeight: props['Current Weight']?.number,
+                    goalWeight: props['Goal Weight']?.number || 68,
+                    startingWeight: props['Starting Weight']?.number || 77.2,
+                    workoutsThisWeek: props['Workouts This Week']?.number,
+                    weekNumber: props['Week Number']?.number,
+                    avgIntensity: props['Avg Intensity']?.number,
+                    weightRemaining: props['Weight Remaining']?.formula?.number,
+                    weightLost: props['Weight Lost']?.formula?.number,
+                    consistency: props['Consistency']?.formula?.number,
+                    lastUpdated: mainEntry.last_edited_time || new Date().toISOString(),
+                    entryTitle: props?.title?.title?.[0]?.text?.content || 'Unknown'
+                };
+                
+                addDebugInfo(`✅ Fitness data parsed:`);
+                addDebugInfo(`   - Entry: ${fitnessData.entryTitle}`);
+                addDebugInfo(`   - Weight: ${fitnessData.currentWeight}kg`);
+                addDebugInfo(`   - Workouts: ${fitnessData.workoutsThisWeek}`);
+                addDebugInfo(`   - Week: ${fitnessData.weekNumber}`);
+                addDebugInfo(`   - Updated: ${new Date(fitnessData.lastUpdated).toLocaleString()}`);
+                
+                // Store for comparison
+                lastFitnessData = fitnessData;
+                
+                return fitnessData;
+                
             } catch (error) {
-                addDebugInfo(`Error fetching fitness data: ${error.message}`);
+                addDebugInfo(`❌ Error fetching fitness data: ${error.message}`);
                 return null;
             }
         }
 
+        // ENHANCED: Improved fitness metrics update with real-time validation
         function updateFitnessMetrics(fitnessData) {
+            const currentWeek = calculateCurrentWeek();
+            
             if (!fitnessData) {
-                addDebugInfo('No fitness data available, using defaults');
+                addDebugInfo('⚠️ No fitness data available - using safe defaults for current week');
+                // Use realistic defaults based on current week
                 fitnessData = {
-                    currentWeight: 75,
+                    currentWeight: 74,
                     goalWeight: 68,
-                    startingWeight: 75,
-                    workoutsThisWeek: 2,
-                    weekNumber: 1
+                    startingWeight: 77.2,
+                    workoutsThisWeek: 0, // Default to 0 for new week
+                    weekNumber: currentWeek.number,
+                    avgIntensity: null,
+                    weightRemaining: 6,
+                    weightLost: 3.2,
+                    consistency: 0
                 };
             }
             
+            // Validate and adjust data based on current week
+            if (fitnessData.weekNumber !== currentWeek.number) {
+                addDebugInfo(`🔄 Week mismatch: Data shows week ${fitnessData.weekNumber}, but current is week ${currentWeek.number}`);
+                // If data is from a previous week, reset workouts for current week
+                if (fitnessData.weekNumber < currentWeek.number) {
+                    fitnessData.workoutsThisWeek = 0;
+                    fitnessData.consistency = 0;
+                    addDebugInfo(`🔄 Reset workouts to 0 for new week ${currentWeek.number}`);
+                }
+            }
+            
+            // Calculate metrics
+            const weightRemaining = fitnessData.weightRemaining || (fitnessData.currentWeight - fitnessData.goalWeight);
+            const weightLost = fitnessData.weightLost || (fitnessData.startingWeight - fitnessData.currentWeight);
+            
             // Update weight display
-            const weightRemaining = fitnessData.currentWeight - fitnessData.goalWeight;
-            document.getElementById('fitnessCurrentWeight').textContent = `${fitnessData.currentWeight}kg`;
-            document.getElementById('fitnessWeightProgress').textContent = `${weightRemaining.toFixed(1)}kg to go`;
+            document.getElementById('fitnessCurrentWeight').textContent = 
+                fitnessData.currentWeight ? `${fitnessData.currentWeight}kg` : 'N/A';
+            document.getElementById('fitnessWeightProgress').textContent = 
+                weightRemaining ? `${weightRemaining.toFixed(1)}kg to go` : 'Calculating...';
             
-            // Update workouts
-            const workoutTarget = 3; // 3 workouts per week
-            const consistency = Math.round((fitnessData.workoutsThisWeek / workoutTarget) * 100);
-            document.getElementById('fitnessWorkoutsWeek').textContent = `${fitnessData.workoutsThisWeek}/${workoutTarget}`;
-            document.getElementById('fitnessConsistency').textContent = `${consistency}% consistency`;
+            // Update workouts with enhanced logic
+            const workoutTarget = 3;
+            const workouts = fitnessData.workoutsThisWeek || 0;
+            const consistency = fitnessData.consistency || 0;
             
-            // Update status based on workouts
+            document.getElementById('fitnessWorkoutsWeek').textContent = `${workouts}/${workoutTarget}`;
+            document.getElementById('fitnessConsistency').textContent = `${Math.round(consistency)}% consistency`;
+            
+            // Update intensity
+            const avgIntensity = fitnessData.avgIntensity;
+            document.getElementById('fitnessAvgIntensity').textContent = 
+                avgIntensity ? avgIntensity.toFixed(1) : 'N/A';
+            
+            // Enhanced status with more detailed conditions
             const statusBar = document.getElementById('fitnessStatusBar');
             const statusIndicator = statusBar.querySelector('.status-indicator');
             
-            if (fitnessData.workoutsThisWeek >= 3) {
+            if (workouts >= 3) {
                 statusIndicator.className = 'status-indicator status-success';
                 statusIndicator.textContent = '✅ Weekly workout goal achieved!';
-            } else if (fitnessData.workoutsThisWeek >= 2) {
+            } else if (workouts >= 2) {
+                const remaining = 3 - workouts;
                 statusIndicator.className = 'status-indicator status-warning';
-                statusIndicator.textContent = `⚠️ Need ${3 - fitnessData.workoutsThisWeek} more workout this week`;
-            } else if (fitnessData.workoutsThisWeek >= 1) {
+                statusIndicator.textContent = `⚠️ Need ${remaining} more workout${remaining > 1 ? 's' : ''} this week`;
+            } else if (workouts >= 1) {
                 statusIndicator.className = 'status-indicator status-warning';
-                statusIndicator.textContent = `⚠️ Need ${3 - fitnessData.workoutsThisWeek} more workouts this week`;
+                statusIndicator.textContent = `⚠️ Need ${3 - workouts} more workouts this week`;
             } else {
                 statusIndicator.className = 'status-indicator status-danger';
                 statusIndicator.textContent = '🚨 No workouts logged this week - start today!';
             }
             
-            addDebugInfo(`Fitness metrics updated: ${fitnessData.currentWeight}kg, ${fitnessData.workoutsThisWeek}/3 workouts`);
+            addDebugInfo(`💪 Fitness metrics updated for Week ${currentWeek.number}:`);
+            addDebugInfo(`   - Weight: ${fitnessData.currentWeight}kg (${weightLost?.toFixed(1)}kg lost)`);
+            addDebugInfo(`   - Workouts: ${workouts}/3 (${Math.round(consistency)}%)`);
+            addDebugInfo(`   - Status: ${statusIndicator.textContent}`);
+        }
+
+        // NEW: Dedicated fitness data sync function
+        async function syncFitnessData() {
+            const btn = document.getElementById('fitnessSyncBtn');
+            const span = btn.querySelector('span');
+            const originalText = span.textContent;
+            
+            btn.disabled = true;
+            span.textContent = '⏳ Syncing Fitness Data...';
+            
+            addDebugInfo('🔄 Manual fitness data sync initiated...');
+
+            try {
+                // Force refresh fitness data
+                const fitnessData = await fetchFitnessData();
+                updateFitnessMetrics(fitnessData);
+                
+                if (fitnessData) {
+                    addDebugInfo(`✅ Fitness sync completed successfully`);
+                    alert(`Fitness Data Synced! 💪\n\nWeight: ${fitnessData.currentWeight}kg\nWorkouts: ${fitnessData.workoutsThisWeek}/3\nWeek: ${fitnessData.weekNumber}\n\nLast updated: ${new Date(fitnessData.lastUpdated).toLocaleString()}`);
+                } else {
+                    addDebugInfo(`⚠️ Fitness sync completed but no data found`);
+                    alert('Fitness sync completed, but no data was found. Please check your Notion database.');
+                }
+
+            } catch (error) {
+                console.error('Fitness sync error:', error);
+                addDebugInfo(`❌ Fitness sync error: ${error.message}`);
+                alert(`Fitness sync error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                span.textContent = originalText;
+            }
         }
 
         function processMilestone(milestone) {
@@ -1259,23 +1388,27 @@
             container.innerHTML = html;
         }
 
+        // ENHANCED: Main metrics update with improved fitness integration
         async function updateMetrics() {
             if (isLoading) return;
             isLoading = true;
 
             try {
                 updateApiStatus('loading');
-                addDebugInfo('Starting metrics update...');
+                addDebugInfo('🔄 Starting enhanced metrics update with real-time fitness sync...');
                 
                 const currentWeek = updateWeekProgress();
-                const rawMilestones = await fetchMilestones();
-                allMilestones = rawMilestones.map(processMilestone);
                 
-                // Fetch fitness data
-                const fitnessData = await fetchFitnessData();
+                // Fetch both milestones and fitness data in parallel
+                const [rawMilestones, fitnessData] = await Promise.all([
+                    fetchMilestones(),
+                    fetchFitnessData()
+                ]);
+                
+                allMilestones = rawMilestones.map(processMilestone);
                 updateFitnessMetrics(fitnessData);
                 
-                // Calculate metrics - FIXED VERSION with unique variable names
+                // Calculate metrics - Week-based completion (fixed version)
                 const totalMilestones = allMilestones.length;
                 const overallCompleted = allMilestones.filter(m => m.completed).length;
                 
@@ -1320,7 +1453,11 @@
 
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 updateApiStatus('success');
-                addDebugInfo(`✅ Week ${currentWeek.number}: ${currentWeekCompleted}/${currentWeekTotal} completed (${currentWeekCompletionRate}%)`);
+                addDebugInfo(`✅ Enhanced update completed for Week ${currentWeek.number}:`);
+                addDebugInfo(`   📊 Milestones: ${currentWeekCompleted}/${currentWeekTotal} (${currentWeekCompletionRate}%)`);
+                if (fitnessData) {
+                    addDebugInfo(`   💪 Fitness: ${fitnessData.currentWeight}kg, ${fitnessData.workoutsThisWeek}/3 workouts`);
+                }
 
             } catch (error) {
                 console.error('Error updating metrics:', error);
@@ -1365,7 +1502,7 @@
             }, 800);
         }
 
-        // ENHANCED: Original automation function now with Week Reference sync
+        // Enhanced automation function (unchanged)
         async function runAutomation() {
             if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
                 addDebugInfo('Error: Please configure your Notion integration token');
@@ -1390,7 +1527,7 @@
                     },
                     body: JSON.stringify({
                         token: NOTION_TOKEN,
-                        action: 'convert_tasks' // Default action
+                        action: 'convert_tasks'
                     })
                 });
 
@@ -1407,15 +1544,11 @@
                     addDebugInfo(`📊 Tasks processed: ${summary.tasksProcessed}`);
                     addDebugInfo(`✨ Milestones created: ${summary.milestonesCreated}`);
                     addDebugInfo(`🔗 Tasks linked: ${summary.tasksLinked}`);
-                    addDebugInfo(`🔄 Week references synced: ${summary.weekSynced || 0}`);
                     
                     let message = `Enhanced Automation Complete! 🎉\n\n`;
                     message += `📊 Processed: ${summary.tasksProcessed} planned tasks\n`;
                     message += `✨ Created: ${summary.milestonesCreated} milestones\n`;
                     message += `🔗 Linked: ${summary.tasksLinked} tasks\n`;
-                    if (summary.weekSynced > 0) {
-                        message += `🔄 Synced: ${summary.weekSynced} week references\n`;
-                    }
                     
                     alert(message);
                     
@@ -1431,103 +1564,4 @@
 
             } catch (error) {
                 console.error('Automation error:', error);
-                addDebugInfo(`❌ Automation error: ${error.message}`);
-                alert(`Automation error: ${error.message}`);
-            } finally {
-                btn.disabled = false;
-                span.textContent = originalText;
-            }
-        }
-
-        // NEW: Dedicated Week Reference Sync function
-        async function syncWeekReferences() {
-            if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
-                addDebugInfo('Error: Please configure your Notion integration token');
-                alert('Please configure your Notion integration token first');
-                return;
-            }
-
-            const btn = document.getElementById('weekSyncBtn');
-            const span = btn.querySelector('span');
-            const originalText = span.textContent;
-            
-            btn.disabled = true;
-            span.textContent = '⏳ Syncing Week References...';
-            
-            addDebugInfo('🔄 Starting Week Reference → Scorecard Week sync...');
-
-            try {
-                const response = await fetch(AUTOMATION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        token: NOTION_TOKEN,
-                        action: 'sync_week_references' // NEW action
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                    throw new Error(`Week sync failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
-                }
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    const { summary } = result;
-                    addDebugInfo(`✅ Week Reference sync completed!`);
-                    addDebugInfo(`📊 Milestones processed: ${summary.milestonesProcessed}`);
-                    addDebugInfo(`🔄 Synced: ${summary.syncedCount}`);
-                    addDebugInfo(`⏭️ Already correct: ${summary.skippedCount}`);
-                    addDebugInfo(`❌ Errors: ${summary.errorCount}`);
-                    
-                    let message = `Week Reference Sync Complete! 🔄\n\n`;
-                    message += `📊 Processed: ${summary.milestonesProcessed} milestones\n`;
-                    message += `🔄 Synced: ${summary.syncedCount} week references\n`;
-                    message += `⏭️ Already correct: ${summary.skippedCount}\n`;
-                    if (summary.errorCount > 0) {
-                        message += `❌ Errors: ${summary.errorCount}\n`;
-                    }
-                    
-                    alert(message);
-                    
-                    // Auto-refresh the dashboard
-                    if (summary.syncedCount > 0) {
-                        setTimeout(() => {
-                            updateMetrics();
-                        }, 1000);
-                    }
-                    
-                } else {
-                    addDebugInfo(`❌ Week sync failed: ${result.error}`);
-                    alert(`Week sync failed: ${result.message || result.error}`);
-                }
-
-            } catch (error) {
-                console.error('Week sync error:', error);
-                addDebugInfo(`❌ Week sync error: ${error.message}`);
-                alert(`Week sync error: ${error.message}`);
-            } finally {
-                btn.disabled = false;
-                span.textContent = originalText;
-            }
-        }
-
-        // Initialize
-        addDebugInfo('Dashboard initialized - starting first update...');
-        updateMetrics();
-
-        // Auto-refresh every 2 minutes
-        setInterval(updateMetrics, 120000);
-
-        // Add subtle animations to cards on load
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.focus-area-card, .stat-card').forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-            });
-        });
-    </script>
-</body>
-</html>
+                addDebugInfo(`❌ Automation error:
