@@ -961,20 +961,6 @@
         // 12 Week Year Start Date
         const TWELVE_WEEK_START = new Date('2025-08-04');
         
-        // Week Reference IDs
-        const WEEK_REFERENCE_IDS = {
-            1: '2421495c-e9ab-80d9-a954-e11c828688a9',
-            2: '2421495c-e9ab-80b5-88ed-d428e228d346',
-            3: '2421495c-e9ab-8113-9acc-c6986f533743',
-            4: '2421495c-e9ab-812d-9fdc-c85af2665b7c',
-            5: '2421495c-e9ab-8130-9ac5-f6a074f3a17a',
-            6: '2421495c-e9ab-813c-9cf3-eba5b4f5576c',
-            9: '2421495c-e9ab-81bb-811e-f9aa61eb3a39',
-            10: '2421495c-e9ab-81d8-9680-df3499e4a322',
-            11: '2421495c-e9ab-81da-b521-dc78ce8d0a74',
-            12: '2421495c-e9ab-81e3-8f42-c977be4ab77b'
-        };
-        
         let isLoading = false;
         let debugData = [];
         let allMilestones = [];
@@ -1181,22 +1167,17 @@
             addDebugInfo(`Fitness metrics updated: ${fitnessData.currentWeight}kg, ${fitnessData.workoutsThisWeek}/3 workouts`);
         }
 
+        // UPDATED FUNCTION: Now includes isCurrentWeek from the formula
         function processMilestone(milestone) {
             const props = milestone.properties;
             
             const taskName = props.Task?.title?.[0]?.text?.content || 'Untitled';
-            const weekReferenceRelation = props['Week Reference']?.relation || [];
-            const weekReferenceIds = weekReferenceRelation.map(ref => ref.id);
+            const isCurrentWeek = props['Is Current Week']?.formula?.boolean || false;
+            const isCurrentAuto = props['Is Current (Auto)']?.rollup?.array?.[0]?.formula?.boolean || false;
             
-            let weekNumberFromReference = null;
-            if (weekReferenceIds.length > 0) {
-                const firstReferenceId = weekReferenceIds[0];
-                for (const [weekNum, refId] of Object.entries(WEEK_REFERENCE_IDS)) {
-                    if (refId === firstReferenceId) {
-                        weekNumberFromReference = parseInt(weekNum);
-                        break;
-                    }
-                }
+            // Log current week detection for debugging
+            if (isCurrentWeek || isCurrentAuto) {
+                addDebugInfo(`Current week milestone found: ${taskName} (Formula: ${isCurrentWeek}, Auto: ${isCurrentAuto})`);
             }
             
             return {
@@ -1204,21 +1185,20 @@
                 task: taskName,
                 completed: props.Completed?.checkbox || false,
                 focusArea: props['Focus Area']?.select?.name || 'None',
-                weekNumberFromReference: weekNumberFromReference,
-                weekReferenceIds: weekReferenceIds,
+                isCurrentWeek: isCurrentWeek || isCurrentAuto, // Use the formula value(s)
                 deadlineType: props['Deadline Type']?.select?.name || 'Flexible'
             };
         }
 
+        // UPDATED FUNCTION: Now uses isCurrentWeek property
         function calculateFocusAreaMetrics(milestones, focusArea, currentWeek) {
             const focusMilestones = milestones.filter(m => m.focusArea === focusArea);
             const completed = focusMilestones.filter(m => m.completed).length;
             const total = focusMilestones.length;
             const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
             
-            const currentWeekFocusMilestones = focusMilestones.filter(m => 
-                m.weekNumberFromReference === currentWeek.number
-            );
+            // Use isCurrentWeek property instead of week number matching
+            const currentWeekFocusMilestones = focusMilestones.filter(m => m.isCurrentWeek);
             
             addDebugInfo(`${focusArea}: ${total} total, ${completed} completed, ${currentWeekFocusMilestones.length} this week`);
             
@@ -1231,12 +1211,14 @@
             };
         }
 
+        // UPDATED FUNCTION: Now uses isCurrentWeek property
         function renderMilestoneList(milestones, containerId, currentWeek) {
             const container = document.getElementById(containerId);
             if (!container) return;
             
+            // Use isCurrentWeek property instead of week number matching
             const currentWeekMilestones = milestones
-                .filter(m => m.weekNumberFromReference === currentWeek.number)
+                .filter(m => m.isCurrentWeek)
                 .slice(0, 5);
             
             if (currentWeekMilestones.length === 0) {
@@ -1259,6 +1241,7 @@
             container.innerHTML = html;
         }
 
+        // UPDATED FUNCTION: Now uses isCurrentWeek property
         async function updateMetrics() {
             if (isLoading) return;
             isLoading = true;
@@ -1271,18 +1254,20 @@
                 const rawMilestones = await fetchMilestones();
                 allMilestones = rawMilestones.map(processMilestone);
                 
+                // Log how many milestones are marked as current week
+                const currentWeekCount = allMilestones.filter(m => m.isCurrentWeek).length;
+                addDebugInfo(`Found ${currentWeekCount} milestones marked as current week`);
+                
                 // Fetch fitness data
                 const fitnessData = await fetchFitnessData();
                 updateFitnessMetrics(fitnessData);
                 
-                // Calculate metrics - FIXED VERSION with unique variable names
+                // Calculate metrics using isCurrentWeek property
                 const totalMilestones = allMilestones.length;
                 const overallCompleted = allMilestones.filter(m => m.completed).length;
                 
-                // Calculate THIS WEEK's milestones (using unique variable name)
-                const currentWeekMilestones = allMilestones.filter(m => 
-                    m.weekNumberFromReference === currentWeek.number
-                );
+                // Use isCurrentWeek property for current week milestones
+                const currentWeekMilestones = allMilestones.filter(m => m.isCurrentWeek);
                 const currentWeekCompleted = currentWeekMilestones.filter(m => m.completed).length;
                 const currentWeekTotal = currentWeekMilestones.length;
                 const currentWeekCompletionRate = currentWeekTotal > 0 ? Math.round((currentWeekCompleted / currentWeekTotal) * 100) : 0;
@@ -1365,7 +1350,7 @@
             }, 800);
         }
 
-        // ENHANCED: Original automation function now with Week Reference sync
+        // Automation functions remain the same
         async function runAutomation() {
             if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
                 addDebugInfo('Error: Please configure your Notion integration token');
@@ -1378,9 +1363,9 @@
             const originalText = span.textContent;
             
             btn.disabled = true;
-            span.textContent = '⏳ Converting Tasks + Syncing Weeks...';
+            span.textContent = '⏳ Converting Tasks...';
             
-            addDebugInfo('Starting enhanced automation (tasks + week sync)...');
+            addDebugInfo('Starting task automation...');
 
             try {
                 const response = await fetch(AUTOMATION_URL, {
@@ -1390,7 +1375,7 @@
                     },
                     body: JSON.stringify({
                         token: NOTION_TOKEN,
-                        action: 'convert_tasks' // Default action
+                        action: 'convert_tasks'
                     })
                 });
 
@@ -1404,22 +1389,14 @@
                 if (result.success) {
                     const { summary } = result;
                     addDebugInfo(`✅ Task conversion completed!`);
-                    addDebugInfo(`📊 Tasks processed: ${summary.tasksProcessed}`);
-                    addDebugInfo(`✨ Milestones created: ${summary.milestonesCreated}`);
-                    addDebugInfo(`🔗 Tasks linked: ${summary.tasksLinked}`);
-                    addDebugInfo(`🔄 Week references synced: ${summary.weekSynced || 0}`);
                     
-                    let message = `Enhanced Automation Complete! 🎉\n\n`;
+                    let message = `Task Automation Complete! 🎉\n\n`;
                     message += `📊 Processed: ${summary.tasksProcessed} planned tasks\n`;
                     message += `✨ Created: ${summary.milestonesCreated} milestones\n`;
-                    message += `🔗 Linked: ${summary.tasksLinked} tasks\n`;
-                    if (summary.weekSynced > 0) {
-                        message += `🔄 Synced: ${summary.weekSynced} week references\n`;
-                    }
+                    message += `🔗 Linked: ${summary.tasksLinked} tasks`;
                     
                     alert(message);
                     
-                    // Auto-refresh the dashboard
                     setTimeout(() => {
                         updateMetrics();
                     }, 1000);
@@ -1439,7 +1416,6 @@
             }
         }
 
-        // NEW: Dedicated Week Reference Sync function
         async function syncWeekReferences() {
             if (!NOTION_TOKEN || NOTION_TOKEN === 'YOUR_ACTUAL_TOKEN_HERE') {
                 addDebugInfo('Error: Please configure your Notion integration token');
@@ -1454,7 +1430,7 @@
             btn.disabled = true;
             span.textContent = '⏳ Syncing Week References...';
             
-            addDebugInfo('🔄 Starting Week Reference → Scorecard Week sync...');
+            addDebugInfo('🔄 Starting Week Reference sync...');
 
             try {
                 const response = await fetch(AUTOMATION_URL, {
@@ -1464,7 +1440,7 @@
                     },
                     body: JSON.stringify({
                         token: NOTION_TOKEN,
-                        action: 'sync_week_references' // NEW action
+                        action: 'sync_week_references'
                     })
                 });
 
@@ -1478,22 +1454,14 @@
                 if (result.success) {
                     const { summary } = result;
                     addDebugInfo(`✅ Week Reference sync completed!`);
-                    addDebugInfo(`📊 Milestones processed: ${summary.milestonesProcessed}`);
-                    addDebugInfo(`🔄 Synced: ${summary.syncedCount}`);
-                    addDebugInfo(`⏭️ Already correct: ${summary.skippedCount}`);
-                    addDebugInfo(`❌ Errors: ${summary.errorCount}`);
                     
                     let message = `Week Reference Sync Complete! 🔄\n\n`;
                     message += `📊 Processed: ${summary.milestonesProcessed} milestones\n`;
                     message += `🔄 Synced: ${summary.syncedCount} week references\n`;
-                    message += `⏭️ Already correct: ${summary.skippedCount}\n`;
-                    if (summary.errorCount > 0) {
-                        message += `❌ Errors: ${summary.errorCount}\n`;
-                    }
+                    message += `⏭️ Already correct: ${summary.skippedCount}`;
                     
                     alert(message);
                     
-                    // Auto-refresh the dashboard
                     if (summary.syncedCount > 0) {
                         setTimeout(() => {
                             updateMetrics();
